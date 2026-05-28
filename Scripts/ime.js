@@ -61,15 +61,34 @@ self.addEventListener('fetch', function (event) {
 var xhr = new XMLHttpRequest();
 xhr.open('GET', './Resources/imenom.jpg', true);
 xhr.responseType = 'arraybuffer';
-xhr.onload = function (e) {
-    var uInt8Array = new Uint8Array(this.response);
-    condb = new SQL.Database(uInt8Array);
-    // contents = condb.exec("SELECT word FROM rubynom where ruby='là' ");
-    // contents is now [{columns:['col1','col2',...], values:[[first row], [second row], ...]}]
-    // console.log(contents[0].values[0]);
-    $("#waitscreen").css({ display: 'none' });
+// xhr.onload = function (e) {
+//     var uInt8Array = new Uint8Array(this.response);
+//     condb = new SQL.Database(uInt8Array);
+//     // contents = condb.exec("SELECT word FROM rubynom where ruby='là' ");
+//     // contents is now [{columns:['col1','col2',...], values:[[first row], [second row], ...]}]
+//     // console.log(contents[0].values[0]);
+//     $("#waitscreen").css({ display: 'none' });
+//     $("#txtPad").focus();
+// };
+
+xhr.onload = function () {
+    try {
+        var uInt8Array = new Uint8Array(this.response);
+        condb = new SQL.Database(uInt8Array);
+        console.log("imenom loaded");
+    } catch (err) {
+        console.error("Failed to open imenom:", err);
+    }
+
+    $("#waitscreen").css({ display: "none" });
     $("#txtPad").focus();
 };
+
+xhr.onerror = function () {
+    console.error("Failed to load imenom.jpg");
+    $("#waitscreen").css({ display: "none" });
+};
+
 xhr.send();
 
 var xhr2 = new XMLHttpRequest();
