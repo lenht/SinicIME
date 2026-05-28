@@ -4,7 +4,7 @@
 
 var shiftbool = false;
 var opttablelist = [$('#Hannom').val()];
-var kblist = ["E→文", "E→อ", "อ→文"];
+var kblist = ["E→文"];
 var keyboard = 0;
 var contents = [];
 var condb;
