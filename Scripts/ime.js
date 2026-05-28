@@ -64,9 +64,9 @@ xhr.responseType = 'arraybuffer';
 xhr.onload = function (e) {
     var uInt8Array = new Uint8Array(this.response);
     condb = new SQL.Database(uInt8Array);
-    contents = condb.exec("SELECT word FROM rubynom where ruby='là' ");
+    // contents = condb.exec("SELECT word FROM rubynom where ruby='là' ");
     // contents is now [{columns:['col1','col2',...], values:[[first row], [second row], ...]}]
-    console.log(contents[0].values[0]);
+    // console.log(contents[0].values[0]);
     $("#waitscreen").css({ display: 'none' });
     $("#txtPad").focus();
 };
