@@ -50,25 +50,6 @@ var quocngu = 0;
 var convertdeftext = '<li onclick="convertpad(1,20)"><a>→ 文</a></li><li onclick="tovertical()"><a>' + document.getElementById('Vertical').value + '</a></li>';
 
 var oo = false;
-self.addEventListener('fetch', function (event) {
-    event.respondWith(
-      caches.match(event.request).then(function (request) {
-          return request || fetch(event.request)
-      })
-    )
-})
-
-//self.addEventListener('install', function (event) {
-//    event.waitUntil(
-//      caches.open('v1').then(function (cache) {
-//          return cache.addAll([
-//            '../Resources/nomime.jpg',
-//            '../Resources/tho.png',
-//            '../Scripts/sql.js'
-//          ]);
-//      })
-//    );
-//});
 
 // Connect to sqlite db file
 var xhr = new XMLHttpRequest();

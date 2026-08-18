@@ -1,23 +1,5 @@
-﻿var ipaSQL = [];
+var ipaSQL = [];
 var ipadb;
-
-self.addEventListener('fetch', function (event) {
-    event.respondWith(
-      caches.match(event.request).then(function (request) {
-          return request || fetch(event.request)
-      })
-    )
-})
-
-//self.addEventListener('install', function (event) {
-//    event.waitUntil(
-//      caches.open('v1').then(function (cache) {
-//          return cache.addAll([
-//            '../Resources/ipa.jpg',
-//          ]);
-//      })
-//    );
-//});
 
 // Connect to sqlite db file
 var xhr = new XMLHttpRequest();
@@ -108,91 +90,10 @@ function TaiNueaIPA(w, accent) {
         return "∅";
 
         if (accent == "roman") {
-            /*
-			-ipa.onset = ipa.onset.replace("̤", "");
-            if ((ipa.onset == "k") && !ipa.rime.startsWith("i") && !ipa.rime.startsWith("e") && !ipa.rime.startsWith("ê")) {
-                ipa.onset = ipa.onset.replace("k", "c").replace("g", "gh").replace("ng", "ngh");
-            }
-            if (ipa.rime.startsWith("i") || ipa.rime.startsWith("ơ") || ipa.rime.startsWith("ê") || ipa.rime.startsWith("â")) {
-                ipa.onset = ipa.onset.replace("w", "u");
-            } else {
-                ipa.onset = ipa.onset.replace("w", "o");
-            }
-			*/
 			ipastr = " " + ((ipa.onset == 'ʔ') ? '' : ipa.onset) + ipa.rime + ipa.tone.replace("ˀ","").replace("7","5");
         }
 		else
 			ipastr = " " + ipa.onset + ipa.rime + ipa.tone;
-		
-	/*
-	while (ipalist.length != 0) {
-        var ipatmp = ipalist.pop();
-        var minortone = "";
-        ipaSQL = ipadb.exec("SELECT " + accent + " FROM TaiLue where phone='ˀ" + ipatmp.toneclass + "' ");
-        if (ipaSQL.length > 0)
-            minortone = ipaSQL[0].values[0];
-        var onsets = [ipatmp.onset];
-        if (ipatmp.onset2.endsWith("1")) {
-            onsets = onsets.concat(ipatmp.onset2.slice(0, -2).split(''));
-            ipatmp.onset2 = ipatmp.onset2.slice(-2);
-        }
-        else {
-            onsets = onsets.concat(ipatmp.onset2.split(''));
-            ipatmp.onset2 = "";
-        }
-
-        ipaSQL = ipadb.exec("SELECT " + accent + " FROM TaiLue where phone='" + onsets.join('') + "' ");
-        if (ipaSQL.length > 0)
-            ipatmp.onset = ipaSQL[0].values[0];
-        else {
-            ipaSQL = ipadb.exec("SELECT " + accent + " FROM TaiLue where phone='" + onsets[onsets.length - 1] + "' ");
-            if (ipaSQL.length > 0)
-                ipatmp.onset = ipaSQL[0].values[0];
-            else {
-                ipatmp.onset = "∅";
-            }
-            for (var j = (onsets.length - 2) ; j >= 0; j--) {
-                ipaSQL = ipadb.exec("SELECT " + accent + " FROM TaiLue where phone='" + onsets[j] + "' ");
-                if (ipaSQL.length > 0)
-                    ipatmp.onset = ipaSQL[0].values[0] + minorsyllable + minortone + " " + ipatmp.onset;
-                else {
-                    ipatmp.onset = "∅";
-                }
-            }
-        }
-        if (ipatmp.onset2 != "") {
-            ipaSQL = ipadb.exec("SELECT " + accent + " FROM TaiLue where phone='" + ipatmp.onset2 + "' ");
-            if (ipaSQL.length > 0)
-                ipatmp.onset += ipaSQL[0].values[0];
-            else {
-                ipastr = (" ∅") + ipastr;
-                continue;
-            }
-        }
-        if (ipatmp.rime == '◌')
-            ipatmp.tone = 'ˀ';
-        ipaSQL = ipadb.exec("SELECT " + accent + " FROM TaiLue where phone='" + ipatmp.rime + "' ");
-        if (ipaSQL.length > 0)
-            ipatmp.rime = ipaSQL[0].values[0];
-        else {
-            ipastr = (" ∅") + ipastr;
-            continue;
-        }
-        ipaSQL = ipadb.exec("SELECT " + accent + " FROM TaiLue where phone='" + ipatmp.tone + ipatmp.toneclass + "' ");
-        if (ipaSQL.length > 0)
-            ipatmp.tone = ipaSQL[0].values[0];
-        else {
-            ipastr = (" ∅") + ipastr;
-            continue;
-        }
-        
-        if (accent == "roman") {
-            ipatmp.onset = (ipatmp.onset + "").replace('`', '');
-            ipastr = " " + ipatmp.onset.replace('ʔ','') + TaiYorimetone(ipatmp.rime[0], ipatmp.tone[0].replace('ˀ', '')) + ipastr;
-        }
-        else
-            ipastr = " " + ipatmp.onset + ipatmp.rime + ipatmp.tone + ipastr;
-    } */  
 
     return (ipastr.substring(1));
 }
@@ -263,91 +164,10 @@ function TaiAitonIPA(w, accent) {
         return "∅";
 
         if (accent == "roman") {
-            /*
-			-ipa.onset = ipa.onset.replace("̤", "");
-            if ((ipa.onset == "k") && !ipa.rime.startsWith("i") && !ipa.rime.startsWith("e") && !ipa.rime.startsWith("ê")) {
-                ipa.onset = ipa.onset.replace("k", "c").replace("g", "gh").replace("ng", "ngh");
-            }
-            if (ipa.rime.startsWith("i") || ipa.rime.startsWith("ơ") || ipa.rime.startsWith("ê") || ipa.rime.startsWith("â")) {
-                ipa.onset = ipa.onset.replace("w", "u");
-            } else {
-                ipa.onset = ipa.onset.replace("w", "o");
-            }
-			*/
 			ipastr = " " + ((ipa.onset == 'ʔ') ? '' : ipa.onset) + ipa.rime + ipa.tone.replace("ˀ","").replace("7","5");
         }
 		else
 			ipastr = " " + ipa.onset + ipa.rime + ipa.tone;
-		
-	/*
-	while (ipalist.length != 0) {
-        var ipatmp = ipalist.pop();
-        var minortone = "";
-        ipaSQL = ipadb.exec("SELECT " + accent + " FROM TaiLue where phone='ˀ" + ipatmp.toneclass + "' ");
-        if (ipaSQL.length > 0)
-            minortone = ipaSQL[0].values[0];
-        var onsets = [ipatmp.onset];
-        if (ipatmp.onset2.endsWith("1")) {
-            onsets = onsets.concat(ipatmp.onset2.slice(0, -2).split(''));
-            ipatmp.onset2 = ipatmp.onset2.slice(-2);
-        }
-        else {
-            onsets = onsets.concat(ipatmp.onset2.split(''));
-            ipatmp.onset2 = "";
-        }
-
-        ipaSQL = ipadb.exec("SELECT " + accent + " FROM TaiLue where phone='" + onsets.join('') + "' ");
-        if (ipaSQL.length > 0)
-            ipatmp.onset = ipaSQL[0].values[0];
-        else {
-            ipaSQL = ipadb.exec("SELECT " + accent + " FROM TaiLue where phone='" + onsets[onsets.length - 1] + "' ");
-            if (ipaSQL.length > 0)
-                ipatmp.onset = ipaSQL[0].values[0];
-            else {
-                ipatmp.onset = "∅";
-            }
-            for (var j = (onsets.length - 2) ; j >= 0; j--) {
-                ipaSQL = ipadb.exec("SELECT " + accent + " FROM TaiLue where phone='" + onsets[j] + "' ");
-                if (ipaSQL.length > 0)
-                    ipatmp.onset = ipaSQL[0].values[0] + minorsyllable + minortone + " " + ipatmp.onset;
-                else {
-                    ipatmp.onset = "∅";
-                }
-            }
-        }
-        if (ipatmp.onset2 != "") {
-            ipaSQL = ipadb.exec("SELECT " + accent + " FROM TaiLue where phone='" + ipatmp.onset2 + "' ");
-            if (ipaSQL.length > 0)
-                ipatmp.onset += ipaSQL[0].values[0];
-            else {
-                ipastr = (" ∅") + ipastr;
-                continue;
-            }
-        }
-        if (ipatmp.rime == '◌')
-            ipatmp.tone = 'ˀ';
-        ipaSQL = ipadb.exec("SELECT " + accent + " FROM TaiLue where phone='" + ipatmp.rime + "' ");
-        if (ipaSQL.length > 0)
-            ipatmp.rime = ipaSQL[0].values[0];
-        else {
-            ipastr = (" ∅") + ipastr;
-            continue;
-        }
-        ipaSQL = ipadb.exec("SELECT " + accent + " FROM TaiLue where phone='" + ipatmp.tone + ipatmp.toneclass + "' ");
-        if (ipaSQL.length > 0)
-            ipatmp.tone = ipaSQL[0].values[0];
-        else {
-            ipastr = (" ∅") + ipastr;
-            continue;
-        }
-        
-        if (accent == "roman") {
-            ipatmp.onset = (ipatmp.onset + "").replace('`', '');
-            ipastr = " " + ipatmp.onset.replace('ʔ','') + TaiYorimetone(ipatmp.rime[0], ipatmp.tone[0].replace('ˀ', '')) + ipastr;
-        }
-        else
-            ipastr = " " + ipatmp.onset + ipatmp.rime + ipatmp.tone + ipastr;
-    } */  
 
     return (ipastr.substring(1));
 }
@@ -3424,17 +3244,6 @@ function TayIPA(w, accent) {
         return { onset: "", rime: "∅", tone: "" };
 
         if (accent == "roman") {
-            /*
-			-ipa.onset = ipa.onset.replace("̤", "");
-            if ((ipa.onset == "k") && !ipa.rime.startsWith("i") && !ipa.rime.startsWith("e") && !ipa.rime.startsWith("ê")) {
-                ipa.onset = ipa.onset.replace("k", "c").replace("g", "gh").replace("ng", "ngh");
-            }
-            if (ipa.rime.startsWith("i") || ipa.rime.startsWith("ơ") || ipa.rime.startsWith("ê") || ipa.rime.startsWith("â")) {
-                ipa.onset = ipa.onset.replace("w", "u");
-            } else {
-                ipa.onset = ipa.onset.replace("w", "o");
-            }
-			*/
             return "" + ((ipa.onset == '∅') ? '' : ipa.onset) + Nungrimetone(ipa.rime, ipa.tone.replace('ˀ', ''));
         }
 		
