@@ -1,147 +1,51 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sinogram IME - Linguaevum</title>
 <link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
+<link href="./Content/bootstrap.min.css" rel="stylesheet">
+<link href="./Content/Site.min.css" rel="stylesheet">
+
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-T99S46KJ26"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
-
   gtag('config', 'G-T99S46KJ26');
 </script>
+</head>
+<body>
+
 <input type="hidden" id="Vertical" value="Vertical">
 <input type="hidden" id="Hannom" value="Hán Nôm">
 <input type="hidden" id="DictGuide" value="Press SHIFT">
-<style>
-
-#copy_button {
-display: none;
-background-color: #c197239c;
-    color: #fff;
-    text-align: center;
-    border-radius: 6px;
-    padding: 5px;
-    top: 0;
-    right: 50%;
-    position: absolute;
-    z-index: 9999;
-}
-</style>
-<script type="text/javascript">
-    if (navigator.userAgent.match(/Android/i)
- || navigator.userAgent.match(/webOS/i)
- || navigator.userAgent.match(/iPhone/i)
- || navigator.userAgent.match(/iPad/i)
- || navigator.userAgent.match(/iPod/i)
- || navigator.userAgent.match(/BlackBerry/i)
- || navigator.userAgent.match(/Windows Phone/i)
- ) {
-        window.location = "./IMEmobile.html";
-   }
-</script>
-<script type="text/javascript" src="./Scripts/jquery-1.10.2.min.js"></script>
-<script type="text/javascript" src="./Scripts/sql.js"></script>
-<script type="text/javascript" src="./Scripts/ime.js"></script>
-<script type="text/javascript" src="./Scripts/transliterate.js"></script>
-<!-- <script src="https://code.responsivevoice.org/responsivevoice.js?key=oxZ9YHww"></script> -->
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sinogram IME - Linguaevum</title>
-    <link href="./Content/bootstrap.css" rel="stylesheet">
-	<link href="./Content/Site.css" rel="stylesheet">
-
-    <script src="./Scripts/modernizr-2.6.2.js"></script>
-
-    
-</head>
 
 <div id="waitscreen"></div>
 
 <div class="navbar navbar-inverse navbar-fixed-top">
-        <div style="position: fixed">
-        </div>
-        <div class="container">
-            <div class="navbar-header">
-                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#layoutbar">
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                    <span class="icon-bar"></span>
-                </button>
-                <img src="./Resources/tho.png" class="logo">
-                                <a class="navbar-brand" href="./">Linguaevum</a>
-                   
-            </div>
+    <div class="container">
+        <div class="navbar-header">
+            <img src="./Resources/tho.png" class="logo">
+            <a class="navbar-brand" href="./">Linguaevum</a>
         </div>
     </div>
-	
+</div>
+
 <div class="jumbotron">
     <table style="width: 100%; height: 100%;">
         <tr>
-            <td rowspan="5" style="width: 100%;">
-                <textarea id="txtPad" style="padding: 3px; width: 100%; height: calc(100vh - 150px); font-size: 20px" onkeypress="txtPadKeyTyped(event)" onkeydown="txtPadKeyPressed(event)" onkeyup="txtPadKeyReleased(event)" onclick="offpad()"></textarea>
-                <div id="txtPadout" style="padding: 3px; display: none; overflow:auto; width: 50%; height: calc(100vh - 150px); background-color: #fff; color: #000; font-size: 20px; float: right; " onchange="focuspad()" onfocus="focuspad()"></div>
-                <button id="copy_button" onclick="share()" style="display: none;">Copy</button>
-				<nav class="navbar navbar-inverse" style="background-image: url('./Resources/wave.png'); border-radius: 0; border: 0; margin: 0;">
-                    <div class="container-fluid">
-                        <div class="navbar-header">
-                            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#myNavbar">
-                                <span class="icon-bar"></span>
-                                <span class="icon-bar"></span>
-                                <span class="icon-bar"></span>
-                            </button>
-                        </div>
-                        <div class="collapse navbar-collapse" id="myNavbar">
-                            <ul class="nav navbar-nav">
-                                <li class="dropup">
-                                    <a class="dropdown-toggle" data-toggle="dropdown">
-                                        <span id="opttablename">Hán Nôm</span>
-                                        <span class="caret"></span>
-                                    </a>
-                                    <ul class="dropdown-menu scrollable-menu">
-                                        <li onclick="opttableselect(0)"><a>Hán Nôm</a></li>
-                                
-                                    </ul>
-                                </li>
-                                <li class="dropup">
-                                    <a class="dropdown-toggle" data-toggle="dropdown">
-                                        <span id="kbname">E→文</span>
-                                        <span class="caret"></span>
-                                    </a>
-                                    <ul class="dropdown-menu">
-                                        <li id="kb0" onclick="optkeyboard(0)"><a>QWERTY→Sinograms</a></li>
-                                        <li id="kb1" onclick="optkeyboard(1)"><a>QWERTY→Phonograms</a></li>
-                                        <li id="kb2" onclick="optkeyboard(2)"><a>Phonograms→Sinograms</a></li>
-                                    </ul>
-                                </li>
-                            </ul>
-                            <ul class="nav navbar-nav navbar-right">
-                        
-                                <li class="dropup" style="background-color: #121890">
-                                    <a style="padding: 0px;" class="dropdown-toggle" data-toggle="dropdown">
-                                        <span>
-                                            <img class="funcbutt transbutt" src="./Resources/transcript.png"/>
-                                        </span>
-                                    </a>
-                                    <ul id="accentipa" class="dropdown-menu">
-                                    
-                                        <li onclick="convertpad(1,20)"><a>→ 文</a></li>
-                                    </ul>
-                                </li>
-                                
-                                <!--<li id="autocomplete" onclick="myCheck(2)"><a>…</a></li>-->
-                            </ul>
-                        </div>
-                    </div>
-                </nav>
+            <td style="width: 100%;">
+                <textarea id="txtPad" onclick="offpad()"></textarea>
+                <div id="txtPadout" style="display: none; overflow: auto; background-color: #fff; color: #000; float: right;" onchange="focuspad()" onfocus="focuspad()"></div>
+                <button id="copy_button" onclick="share()">Copy</button>
             </td>
-            <td valign="top" style="padding: 1px 2px; ">
-
+            <td valign="top" style="padding: 1px 2px;">
                 <table id="outlist">
                     <tr>
                         <td></td>
-                        <td>
-                            <div id="rubytype"></div>
-                        </td>
+                        <td><div id="rubytype"></div></td>
                     </tr>
                     <tr><td>1</td><td id="w1" class="outopt" onclick="setSelectedIndex(1)"></td></tr>
                     <tr><td>2</td><td id="w2" class="outopt" onclick="setSelectedIndex(2)"></td></tr>
@@ -153,28 +57,96 @@ background-color: #c197239c;
                     <tr><td>8</td><td id="w8" class="outopt" onclick="setSelectedIndex(8)"></td></tr>
                     <tr><td>9</td><td id="w9" class="outopt" onclick="setSelectedIndex(9)"></td></tr>
                 </table>
-                <div class="scrollable-menu" id="example">
-                    <table>
-                        <tr>
-                            <td>
-                                Press SHIFT
-                            </td>
-                        </tr>
-                    </table>
-                </div>
+                <table class="pager">
+                    <tr>
+                        <td onclick="leftopt()">&lt;</td>
+                        <td></td>
+                        <td onclick="rightopt()">&gt;</td>
+                    </tr>
+                </table>
+                <div id="example" class="scrollable-menu"></div>
             </td>
         </tr>
     </table>
-
 </div>
+
+<nav class="navbar navbar-inverse" style="background-image: url('./Resources/wave.png'); border-radius: 0; border: 0; margin: 0;">
+    <div class="container-fluid">
+        <div class="navbar-header" style="float: left;">
+            <ul class="nav navbar-nav navbar-left">
+                <li class="dropup">
+                    <a class="dropdown-toggle" data-toggle="dropdown">
+                        <span id="opttablename">Hán Nôm</span>
+                        <span class="caret"></span>
+                    </a>
+                    <ul class="dropdown-menu scrollable-menu">
+                        <li onclick="opttableselect(0)"><a>Hán Nôm</a></li>
+                    </ul>
+                </li>
+                <li class="dropup">
+                    <a class="dropdown-toggle" data-toggle="dropdown">
+                        <span id="kbname">E→文</span>
+                        <span class="caret"></span>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li id="kb0" onclick="optkeyboard(0)"><a>QWERTY→Sinograms</a></li>
+                        <li id="kb1" onclick="optkeyboard(1)"><a>QWERTY→Phonograms</a></li>
+                        <li id="kb2" onclick="optkeyboard(2)"><a>Phonograms→Sinograms</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+        <div class="navbar-header" style="float: right;">
+            <ul class="nav navbar-nav navbar-right">
+                <li class="dropup" style="background-color: #121890">
+                    <a style="padding: 0px;" class="dropdown-toggle" data-toggle="dropdown">
+                        <span>
+                            <img class="funcbutt transbutt" src="./Resources/transcript.png"/>
+                        </span>
+                    </a>
+                    <ul id="accentipa" class="dropdown-menu">
+                        <li onclick="convertpad(1,20)"><a>→ 文</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
 <footer>
-        <br><p style="margin: 0 0 0 30px; font-size: 12px; line-height: 1.2;">Author: Sky Darmos</p>
-        <p style="margin: 0 0 0 30px; font-size: 12px; line-height: 1.2;">Programmers: Trần Thanh Trúc (陳青竹) & Nguyễn Việt Khôi (阮越魁)</p>
-        <p style="margin: 0 0 0 30px; font-size: 12px; line-height: 1.2;">Etymology consultant: Nguyễn Việt Khôi (阮越魁)</p><br>
-        <p style="margin: 0 0 0 30px; font-size: 12px; line-height: 1.2;">© 2024 - 2026 - Sky Darmos - Vietnamese Etymography (chữ Nôm)</p>
-        <p style="margin: 0 0 0 30px; font-size: 12px; line-height: 1.2;">Features more than 48,000 Vietnamese single and compound words. </p>
-    </footer>
-<!-- <script src="./Scripts/jquery-1.10.2.js"></script>
-<script src="./Scripts/jquery-3.0.0.js"></script> -->
+    <br><p style="margin: 0 0 0 30px; font-size: 12px; line-height: 1.2;">Author: Sky Darmos</p>
+    <p style="margin: 0 0 0 30px; font-size: 12px; line-height: 1.2;">Programmers: Trần Thanh Trúc (陳青竹) & Nguyễn Việt Khôi (阮越魁)</p>
+    <p style="margin: 0 0 0 30px; font-size: 12px; line-height: 1.2;">Etymology consultant: Nguyễn Việt Khôi (阮越魁)</p><br>
+    <p style="margin: 0 0 0 30px; font-size: 12px; line-height: 1.2;">© 2024 - 2026 - Sky Darmos - Vietnamese Etymography (chữ Nôm)</p>
+    <p style="margin: 0 0 0 30px; font-size: 12px; line-height: 1.2;">Features more than 48,000 Vietnamese single and compound words. </p>
+</footer>
+
+<script src="./Scripts/jquery-1.10.2.min.js"></script>
+<script src="./Scripts/sql.js"></script>
+<script src="./Scripts/ime.js"></script>
+<script src="./Scripts/imemobile.js"></script>
+<script src="./Scripts/transliterate.js"></script>
 <script src="./Scripts/bootstrap.js"></script>
-<script src="./Scripts/respond.js"></script>
+<script>
+// The site used to be two separate pages (index.html for desktop, IMEmobile.html
+// for touch devices) purely because of this one difference: touch keyboards don't
+// reliably fire keypress/keyCode events, so composition has to be inferred from the
+// `input` event instead of key events. Everything else about the page is now identical
+// and handled by CSS breakpoints in Site.css, so the only thing left to branch on here
+// is which input-handling strategy to attach.
+(function () {
+    var txtPad = document.getElementById('txtPad');
+    var usesTouchInput = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+
+    if (usesTouchInput) {
+        txtPad.addEventListener('keydown', txtPadKeyDown);
+        txtPad.addEventListener('keyup', txtPadKeyInput);
+    } else {
+        txtPad.addEventListener('keypress', txtPadKeyTyped);
+        txtPad.addEventListener('keydown', txtPadKeyPressed);
+        txtPad.addEventListener('keyup', txtPadKeyReleased);
+    }
+})();
+</script>
+</body>
+</html>
