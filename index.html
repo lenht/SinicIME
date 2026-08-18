@@ -182,22 +182,21 @@
 
 <script src="./Scripts/sql.js"></script>
 <script src="./Scripts/ime.js"></script>
-<script src="./Scripts/imemobile.js"></script>
 <script src="./Scripts/transliterate.js"></script>
 <script src="./Scripts/dropdown.js"></script>
 <script>
 // The site used to be two separate pages (index.html for desktop, IMEmobile.html
 // for touch devices) purely because of this one difference: touch keyboards don't
-// reliably fire keypress/keyCode events, so composition has to be inferred from the
-// `input` event instead of key events. Everything else about the page is now identical
-// and handled by CSS breakpoints in Site.css, so the only thing left to branch on here
-// is which input-handling strategy to attach.
+// reliably fire keypress/keyCode events, so composition has to be inferred by
+// diffing txtPad's value on 'keyup' instead of reading key events directly.
+// Both handlers now live together in ime.js (txtPadKeyInput for touch,
+// txtPadKeyPressed/txtPadKeyTyped for physical keyboards); this is just the
+// switch that picks which one to attach.
 (function () {
     var txtPad = document.getElementById('txtPad');
     var usesTouchInput = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
 
     if (usesTouchInput) {
-        txtPad.addEventListener('keydown', txtPadKeyDown);
         txtPad.addEventListener('keyup', txtPadKeyInput);
     } else {
         txtPad.addEventListener('keypress', txtPadKeyTyped);
