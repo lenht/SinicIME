@@ -15,6 +15,65 @@
   gtag('js', new Date());
   gtag('config', 'G-T99S46KJ26');
 </script>
+
+<style>
+#copy_button {
+    display: none;
+    background-color: #c197239c;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 5px;
+    top: 0;
+    right: 50%;
+    position: absolute;
+    z-index: 9999;
+}
+
+/* Replaces the old two-page split: same text pad, sized per breakpoint */
+#txtPad, #txtPadout {
+    padding: 3px;
+    width: 100%;
+    height: calc(100vh - 150px);
+    font-size: 20px;
+}
+
+@media (max-width: 767px) {
+    #txtPad, #txtPadout {
+        height: calc(100vh - 90px);
+        font-size: 16px;
+    }
+}
+
+@media (max-width: 698px) {
+    .jumbotron {
+        margin-top: 1px;
+    }
+}
+
+@media (max-width: 639px) {
+    .jumbotron {
+        margin-top: 34px;
+    }
+}
+
+.pager {
+    width: 100%;
+    text-align: center;
+    color: #000;
+}
+.pager td {
+    background: #c19723;
+    font-size: 12px;
+    cursor: pointer;
+}
+.pager td:first-child {
+    border-right: solid 1px;
+}
+.pager td:last-child {
+    border-left: solid 1px;
+}
+</style>
 </head>
 <body>
 
@@ -121,12 +180,11 @@
     <p style="margin: 0 0 0 30px; font-size: 12px; line-height: 1.2;">Features more than 48,000 Vietnamese single and compound words. </p>
 </footer>
 
-<script src="./Scripts/jquery-1.10.2.min.js"></script>
 <script src="./Scripts/sql.js"></script>
 <script src="./Scripts/ime.js"></script>
 <script src="./Scripts/imemobile.js"></script>
 <script src="./Scripts/transliterate.js"></script>
-<script src="./Scripts/bootstrap.js"></script>
+<script src="./Scripts/dropdown.js"></script>
 <script>
 // The site used to be two separate pages (index.html for desktop, IMEmobile.html
 // for touch devices) purely because of this one difference: touch keyboards don't

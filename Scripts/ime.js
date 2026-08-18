@@ -1,9 +1,21 @@
-﻿String.prototype.replaceLast = function (search, replace) {
+String.prototype.replaceLast = function (search, replace) {
     return this.replace(new RegExp(search + "([^" + search + "]*)$"), replace + "$1");
 }
 
+// Minimal replacement for jQuery's $(el).css({...}) — sets each style
+// property via CSSStyleDeclaration.setProperty so hyphenated CSS property
+// names (e.g. 'font-family', 'writing-mode') work without conversion to
+// camelCase.
+function $css(el, props) {
+    for (var key in props) {
+        if (Object.prototype.hasOwnProperty.call(props, key)) {
+            el.style.setProperty(key, props[key]);
+        }
+    }
+}
+
 var shiftbool = false;
-var opttablelist = [$('#Hannom').val()];
+var opttablelist = [document.getElementById('Hannom').value];
 var kblist = ["E→文"];
 var keyboard = 0;
 var contents = [];
@@ -34,7 +46,7 @@ var optruby = "ruby";
 var optlev = "and level>1";
 var sugCB = false;
 var quocngu = 0;
-var convertdeftext = '<li onclick="convertpad(1,20)"><a>→ 文</a></li><li onclick="tovertical()"><a>' + $('#Vertical').val() + '</a></li>';
+var convertdeftext = '<li onclick="convertpad(1,20)"><a>→ 文</a></li><li onclick="tovertical()"><a>' + document.getElementById('Vertical').value + '</a></li>';
 
 var oo = false;
 self.addEventListener('fetch', function (event) {
@@ -67,8 +79,8 @@ xhr.responseType = 'arraybuffer';
 //     // contents = condb.exec("SELECT word FROM rubynom where ruby='là' ");
 //     // contents is now [{columns:['col1','col2',...], values:[[first row], [second row], ...]}]
 //     // console.log(contents[0].values[0]);
-//     $("#waitscreen").css({ display: 'none' });
-//     $("#txtPad").focus();
+//     $css(document.getElementById("waitscreen"), { display: 'none' });
+//     document.getElementById("txtPad").focus();
 // };
 
 xhr.onload = function () {
@@ -80,13 +92,13 @@ xhr.onload = function () {
         console.error("Failed to open imenom:", err);
     }
 
-    $("#waitscreen").css({ display: "none" });
-    $("#txtPad").focus();
+    $css(document.getElementById("waitscreen"), { display: "none" });
+    document.getElementById("txtPad").focus();
 };
 
 xhr.onerror = function () {
     console.error("Failed to load imenom.jpg");
-    $("#waitscreen").css({ display: "none" });
+    $css(document.getElementById("waitscreen"), { display: "none" });
 };
 
 xhr.send();
@@ -111,53 +123,53 @@ function virtualtype(key) {
     document.getElementById('txtPad').dispatchEvent(new KeyboardEvent('keydown', { 'key': key, 'keyCode': key.charCodeAt(0), 'charCode': key.charCodeAt(0), 'which': key.charCodeAt(0), 'bubbles': true, 'cancelable': true, 'returnValue': true, 'composed': true }));
     document.getElementById('txtPad').dispatchEvent(new KeyboardEvent('keypress', { 'key': key, 'keyCode': key.charCodeAt(0), 'charCode': key.charCodeAt(0), 'which': key.charCodeAt(0), 'bubbles': true, 'cancelable': true, 'returnValue': true, 'composed': true }));
     if (key != " ") {
-        var value = $("#txtPad").val();
-        var start = $("#txtPad")[0].selectionStart;
-        var end = $("#txtPad")[0].selectionEnd;
-        $("#txtPad").val(value.slice(0, start) + key + value.slice(end));
-        $("#txtPad")[0].selectionStart = $("#txtPad")[0].selectionEnd = start + key.length;
+        var value = document.getElementById("txtPad").value;
+        var start = document.getElementById("txtPad").selectionStart;
+        var end = document.getElementById("txtPad").selectionEnd;
+        document.getElementById("txtPad").value = value.slice(0, start) + key + value.slice(end);
+        document.getElementById("txtPad").selectionStart = document.getElementById("txtPad").selectionEnd = start + key.length;
     }
 }
 
 function tovertical() {
-    $("#txtPad").css({ 'width': '50%' });
-    $("#txtPadout").css({ 'writing-mode': 'vertical-rl' });
-    $("#txtPadout").css({ 'display': 'block' });
-    $("#copy_button").css({ 'display': 'block' });
-    var vertxt = $("#txtPad").val().replace(/\n/g, "<br>").replace(/、/g, "︑").replace(/。/g, "︒").replace(/：/g, "︓").replace(/；/g, "︔").replace(/！/g, "︕").replace(/？/g, "︖").replace(/…/g, "︙");
-    $("#txtPadout").html(vertxt);
+    $css(document.getElementById("txtPad"), { 'width': '50%' });
+    $css(document.getElementById("txtPadout"), { 'writing-mode': 'vertical-rl' });
+    $css(document.getElementById("txtPadout"), { 'display': 'block' });
+    $css(document.getElementById("copy_button"), { 'display': 'block' });
+    var vertxt = document.getElementById("txtPad").value.replace(/\n/g, "<br>").replace(/、/g, "︑").replace(/。/g, "︒").replace(/：/g, "︓").replace(/；/g, "︔").replace(/！/g, "︕").replace(/？/g, "︖").replace(/…/g, "︙");
+    document.getElementById("txtPadout").innerHTML = vertxt;
 }
 
 function myCheck(boxclick) {
     var ele;
     switch (boxclick) {
-        case 0: ele = $("#borrowings"); break;
-        case 1: ele = $("#variants"); break;
-        case 2: ele = $("#autocomplete"); break;
+        case 0: ele = document.getElementById("borrowings"); break;
+        case 1: ele = document.getElementById("variants"); break;
+        case 2: ele = document.getElementById("autocomplete"); break;
         default: break;
     }
-    if (ele.hasClass('active'))
-        ele.removeClass('active');
+    if (ele.classList.contains('active'))
+        ele.classList.remove('active');
     else
-        ele.addClass('active');
+        ele.classList.add('active');
 
     optlev = "and level>1";
-    if ($("#variants").hasClass('active') && $("#borrowings").hasClass('active'))
+    if (document.getElementById("variants").classList.contains('active') && document.getElementById("borrowings").classList.contains('active'))
         optlev = "";
-    else if ($("#variants").hasClass('active') && !$("#borrowings").hasClass('active'))
+    else if (document.getElementById("variants").classList.contains('active') && !document.getElementById("borrowings").classList.contains('active'))
         optlev = "and level>0";
-    else if ($("#borrowings").hasClass('active'))
+    else if (document.getElementById("borrowings").classList.contains('active'))
         optlev = "and (level>1 or level=0)";
-    sugCB = $("#autocomplete").hasClass('active');
-    $("#txtPad").focus();
+    sugCB = document.getElementById("autocomplete").classList.contains('active');
+    document.getElementById("txtPad").focus();
 }
 
 function opttableselect(tablesel) {
     quocngu = tablesel;
-    $("#keyboard").css({ 'font-family': 'Lexend, "Leelawadee UI", Tahoma, "Tai Lanna", "Cambria Tai Yo", "Lanexang Mon4", "Microsoft New Tai Lue", sans-serif, "Muong Lo Cursive", TaiViet, "Segoe Ahom Print", "Myanmar Text", "Helvetica Neue", Helvetica, Arial, SimSun, FSung-2, FSung-3, "Malgun Gothic", "BabelStone Han", Sawndip, SimSun-ExtB, SimSun-ExtG, Jigmo3, Sukhothai, "Nom Na Tong", "Han-Nom Gothic Supplement"' });
-    $("body").css({ 'font-family': 'Lexend, "Leelawadee UI", Tahoma, "Tai Lanna", "Cambria Tai Yo", "Lanexang Mon4", "Microsoft New Tai Lue", sans-serif, "Muong Lo Cursive", TaiViet, "Segoe Ahom Print", "Myanmar Text", "Helvetica Neue", Helvetica, Arial, SimSun, FSung-2, FSung-3, "Malgun Gothic", "BabelStone Han", Sawndip, SimSun-ExtB, SimSun-ExtG, Jigmo3, Sukhothai, "Nom Na Tong", "Han-Nom Gothic Supplement"' });
-    $("#txtPad").css({ 'font-family': 'Cambria, serif, "Tai Lanna", "Cambria Tai Yo", "Leelawadee UI", Tahoma, "Lanexang Mon4", "Microsoft New Tai Lue", sans-serif, "Muong Lo Cursive", TaiViet, "Segoe Ahom Print", "Myanmar Text", "Helvetica Neue", Helvetica, Arial, SimSun, FSung-2, FSung-3, "Malgun Gothic", "BabelStone Han", Sawndip, SimSun-ExtB, SimSun-ExtG, Jigmo3, Sukhothai, "Nom Na Tong", "Han-Nom Gothic Supplement"' });
-    $("#txtPadout").css({ 'font-family': 'Cambria, serif, "Tai Lanna", "Cambria Tai Yo", "Leelawadee UI", Tahoma, "Lanexang Mon4", "Microsoft New Tai Lue", sans-serif, "Muong Lo Cursive", TaiViet, "Segoe Ahom Print", "Myanmar Text", "Helvetica Neue", Helvetica, Arial, SimSun, SimSun-ExtB, SimSun-ExtG, Jigmo3, "Malgun Gothic", "BabelStone Han", Sawndip, Sukhothai, "Nom Na Tong", "Han-Nom Gothic Supplement"' });
+    $css(document.getElementById("keyboard"), { 'font-family': 'Lexend, "Leelawadee UI", Tahoma, "Tai Lanna", "Cambria Tai Yo", "Lanexang Mon4", "Microsoft New Tai Lue", sans-serif, "Muong Lo Cursive", TaiViet, "Segoe Ahom Print", "Myanmar Text", "Helvetica Neue", Helvetica, Arial, SimSun, FSung-2, FSung-3, "Malgun Gothic", "BabelStone Han", Sawndip, SimSun-ExtB, SimSun-ExtG, Jigmo3, Sukhothai, "Nom Na Tong", "Han-Nom Gothic Supplement"' });
+    $css(document.body, { 'font-family': 'Lexend, "Leelawadee UI", Tahoma, "Tai Lanna", "Cambria Tai Yo", "Lanexang Mon4", "Microsoft New Tai Lue", sans-serif, "Muong Lo Cursive", TaiViet, "Segoe Ahom Print", "Myanmar Text", "Helvetica Neue", Helvetica, Arial, SimSun, FSung-2, FSung-3, "Malgun Gothic", "BabelStone Han", Sawndip, SimSun-ExtB, SimSun-ExtG, Jigmo3, Sukhothai, "Nom Na Tong", "Han-Nom Gothic Supplement"' });
+    $css(document.getElementById("txtPad"), { 'font-family': 'Cambria, serif, "Tai Lanna", "Cambria Tai Yo", "Leelawadee UI", Tahoma, "Lanexang Mon4", "Microsoft New Tai Lue", sans-serif, "Muong Lo Cursive", TaiViet, "Segoe Ahom Print", "Myanmar Text", "Helvetica Neue", Helvetica, Arial, SimSun, FSung-2, FSung-3, "Malgun Gothic", "BabelStone Han", Sawndip, SimSun-ExtB, SimSun-ExtG, Jigmo3, Sukhothai, "Nom Na Tong", "Han-Nom Gothic Supplement"' });
+    $css(document.getElementById("txtPadout"), { 'font-family': 'Cambria, serif, "Tai Lanna", "Cambria Tai Yo", "Leelawadee UI", Tahoma, "Lanexang Mon4", "Microsoft New Tai Lue", sans-serif, "Muong Lo Cursive", TaiViet, "Segoe Ahom Print", "Myanmar Text", "Helvetica Neue", Helvetica, Arial, SimSun, SimSun-ExtB, SimSun-ExtG, Jigmo3, "Malgun Gothic", "BabelStone Han", Sawndip, Sukhothai, "Nom Na Tong", "Han-Nom Gothic Supplement"' });
     switch (quocngu) {
         case 0:
         default: opttable = "rubynom";
@@ -165,25 +177,25 @@ function opttableselect(tablesel) {
             break;
     }
     loadkeyboard();
-    $("#opttablename").html(opttablelist[tablesel]);
-    $("#txtPad").focus();
+    document.getElementById("opttablename").innerHTML = opttablelist[tablesel];
+    document.getElementById("txtPad").focus();
 }
 
 function optkeyboard(kbsel) {
     keyboard = kbsel;
-    $("#kbname").html(kblist[kbsel]);
+    document.getElementById("kbname").innerHTML = kblist[kbsel];
     loadkeyboard();
-    $("#txtPad").focus();
+    document.getElementById("txtPad").focus();
 }
 
 //keydown
 function txtPadKeyPressed(evt) {
     var evtK = evt.keyCode || evt.charCode;
-    if ((evtK == 17) || (evtK == 27) || ([...$("#rubytype").text()].length >= 12)) { //CTRL or ESC
+    if ((evtK == 17) || (evtK == 27) || ([...document.getElementById("rubytype").textContent].length >= 12)) { //CTRL or ESC
         contail = conqueue = "";
         conlenbuf = 0;
         delList();
-        $("#rubytype").html("");
+        document.getElementById("rubytype").innerHTML = "";
         lentype = 0;
         return;
     }
@@ -193,14 +205,14 @@ function txtPadKeyPressed(evt) {
             shiftbool = true;
             var ind = selectedindex;
             if (ind > 0) {
-                selExample($("#w" + ind).text(), $("#rubytype").text());
+                selExample(document.getElementById("w" + ind).textContent, document.getElementById("rubytype").textContent);
                 return;
             }
-            var selstart = $("#txtPad")[0].selectionStart;
-            var selend = $("#txtPad")[0].selectionEnd;
-            var subtxt = $('#txtPad').val().substring(selstart, selend);
+            var selstart = document.getElementById("txtPad").selectionStart;
+            var selend = document.getElementById("txtPad").selectionEnd;
+            var subtxt = document.getElementById('txtPad').value.substring(selstart, selend);
             if (subtxt.length > 0)
-                $("#example").html("<table><tr><td>" + logo2phon(subtxt, false, 20) + "</td></tr></table>");
+                document.getElementById("example").innerHTML = "<table><tr><td>" + logo2phon(subtxt, false, 20) + "</td></tr></table>";
         }
     }
 
@@ -212,12 +224,12 @@ function txtPadKeyPressed(evt) {
                     upPage();
                     setSelectedIndex(9);
                     if (carpos == -1)
-                        carpos = $('#txtPad')[0].selectionEnd;
+                        carpos = document.getElementById('txtPad').selectionEnd;
                     return;
                 }
                 setSelectedIndex(ind - 1);
                 if (carpos == -1)
-                    carpos = $('#txtPad')[0].selectionEnd;
+                    carpos = document.getElementById('txtPad').selectionEnd;
                 return;
             } else
                 console.log("alert!!");
@@ -229,12 +241,12 @@ function txtPadKeyPressed(evt) {
                     dnPage();
                     setSelectedIndex(1);
                     if (carpos == -1)
-                        carpos = $('#txtPad')[0].selectionEnd;
+                        carpos = document.getElementById('txtPad').selectionEnd;
                     return;
                 }
                 setSelectedIndex(ind + 1);
                 if (carpos == -1)
-                    carpos = $('#txtPad')[0].selectionEnd;
+                    carpos = document.getElementById('txtPad').selectionEnd;
                 return;
             } else
                 console.log("alert!!");
@@ -245,7 +257,7 @@ function txtPadKeyPressed(evt) {
                 setSelectedIndex(1);
             }
             if (carpos == -1)
-                carpos = $('#txtPad')[0].selectionEnd;
+                carpos = document.getElementById('txtPad').selectionEnd;
             return;
         }
         if (evtK == 37) { //LEFT
@@ -254,7 +266,7 @@ function txtPadKeyPressed(evt) {
                 setSelectedIndex(1);
             }
             if (carpos == -1)
-                carpos = $('#txtPad')[0].selectionEnd;
+                carpos = document.getElementById('txtPad').selectionEnd;
             return;
         }
     } else {
@@ -262,20 +274,20 @@ function txtPadKeyPressed(evt) {
             contail = conqueue = "";
             conlenbuf = 0;
             delList();
-            $("#rubytype").html("");
+            document.getElementById("rubytype").innerHTML = "";
             lentype = 0;
             return;
         }
     }
 
-    var rubystr = $("#rubytype").text();
+    var rubystr = document.getElementById("rubytype").textContent;
     var utf = 1;
     var rt = rubystr.charCodeAt(rubystr.length - 1);
     if ((rt >= 0xD800) && (rt <= 0xDFFF))
         utf = 2;
     if (evtK == 8) {    //BKSPC
         if (rubystr.length > 0) {
-            $("#rubytype").html(rubystr.substring(0, rubystr.length - utf));
+            document.getElementById("rubytype").innerHTML = rubystr.substring(0, rubystr.length - utf);
             lentype--;
         } else
             lentype = 0;
@@ -288,9 +300,9 @@ function txtPadKeyPressed(evt) {
 function txtPadKeyTyped(evt) {
     var evtK = evt.keyCode || evt.charCode;
     var evtC = String.fromCharCode(evtK);
-    var rubystr = $("#rubytype").text();
+    var rubystr = document.getElementById("rubytype").textContent;
     if (evtK == 13) {   //ENTER
-        $("#rubytype").html("");
+        document.getElementById("rubytype").innerHTML = "";
         listUpdate();
         lentype = 0;
         return;
@@ -310,13 +322,13 @@ function txtPadKeyTyped(evt) {
                 conlenbuf = conlentail;
             if (selnum > contrSz)
                 conlenbuf = 0;
-            putWord($("#w" + selnum).text());
+            putWord(document.getElementById("w" + selnum).textContent);
         } else {
-            var txtarea = $("#txtPad").val();
-            var caretend = $("#txtPad")[0].selectionEnd;
-            $("#txtPad").val(txtarea.substring(0, caretend) + evtC + txtarea.substring(caretend, txtarea.length));
-            $("#txtPad")[0].selectionStart = $("#txtPad")[0].selectionEnd = caretend + evtC.length;
-            $("#rubytype").html("");
+            var txtarea = document.getElementById("txtPad").value;
+            var caretend = document.getElementById("txtPad").selectionEnd;
+            document.getElementById("txtPad").value = txtarea.substring(0, caretend) + evtC + txtarea.substring(caretend, txtarea.length);
+            document.getElementById("txtPad").selectionStart = document.getElementById("txtPad").selectionEnd = caretend + evtC.length;
+            document.getElementById("rubytype").innerHTML = "";
             lentype = 0;
             delList();
         }
@@ -328,7 +340,7 @@ function txtPadKeyTyped(evt) {
             if (isNoSpaceLang(quocngu)) {
                 listUpdate();
             } else {
-                $("#rubytype").html(rubystr + " ");
+                document.getElementById("rubytype").innerHTML = rubystr + " ";
                 listUpdate();
             }
         }
@@ -364,10 +376,10 @@ function txtPadKeyTyped(evt) {
         }
         if (optionlist.length != 0) {
             evt.preventDefault();
-            conlentmp = $("#w" + selectedindex).text().length;
-            putWord($("#w" + selectedindex).text());
+            conlentmp = document.getElementById("w" + selectedindex).textContent.length;
+            putWord(document.getElementById("w" + selectedindex).textContent);
         }
-        $("#txtPad").focus();
+        document.getElementById("txtPad").focus();
         return;
     } else if (((evtK > 31) && (evtK < 39)) || ((evtK > 39) && (evtK < 48)) || ((evtK > 57) && (evtK < 65)) || ((evtK > 90) && (evtK < 96)) || ((evtK > 122) && (evtK < 127))) {    //Punctuation
         if ((ind >= conrSz) && (ind < contrSz))
@@ -375,16 +387,16 @@ function txtPadKeyTyped(evt) {
         if (ind >= contrSz)
             conlenbuf = 0;
         if (optionlist.length != 0) {
-            putWord($("#w" + selectedindex).text());
+            putWord(document.getElementById("w" + selectedindex).textContent);
         }
         conqueue = contail = "";
         conlenbuf = 0;
         lentype = 0;
         lentype++;
-        $("#rubytype").html(typeChar($("#rubytype").text(), evtC));
+        document.getElementById("rubytype").innerHTML = typeChar(document.getElementById("rubytype").textContent, evtC);
     } else if (evtK != 8) {
         lentype++;
-        $("#rubytype").html(typeChar($("#rubytype").text(), evtC));
+        document.getElementById("rubytype").innerHTML = typeChar(document.getElementById("rubytype").textContent, evtC);
     }
     listUpdate();
     
@@ -392,10 +404,10 @@ function txtPadKeyTyped(evt) {
 
 //keyup
 function txtPadKeyReleased(evt) {
-    $("#example").html("<table><tr><td>"+$("#DictGuide").val()+"</td></tr></table>");
+    document.getElementById("example").innerHTML = "<table><tr><td>"+document.getElementById("DictGuide").value+"</td></tr></table>";
     if (carpos != -1) {
-        $('#txtPad')[0].selectionStart = carpos;
-        $('#txtPad')[0].selectionEnd = carpos;
+        document.getElementById('txtPad').selectionStart = carpos;
+        document.getElementById('txtPad').selectionEnd = carpos;
         carpos = -1;
     }
     var evtK = evt.keyCode || evt.charCode;
@@ -404,14 +416,14 @@ function txtPadKeyReleased(evt) {
 }
 
 function putWord(instr) {
-    var txtarea = $("#txtPad").val();
-    $("#txtPad")[0].selectionStart = $("#txtPad")[0].selectionEnd - lentype - conlenbuf;
-    var caretbeg = $("#txtPad")[0].selectionStart;
-    var caretend = $("#txtPad")[0].selectionEnd;
-    $("#txtPad").val(txtarea.substring(0, caretbeg) + instr + txtarea.substring(caretend, txtarea.length));
+    var txtarea = document.getElementById("txtPad").value;
+    document.getElementById("txtPad").selectionStart = document.getElementById("txtPad").selectionEnd - lentype - conlenbuf;
+    var caretbeg = document.getElementById("txtPad").selectionStart;
+    var caretend = document.getElementById("txtPad").selectionEnd;
+    document.getElementById("txtPad").value = txtarea.substring(0, caretbeg) + instr + txtarea.substring(caretend, txtarea.length);
     conlenbuf = 0;
-    $("#txtPad")[0].selectionStart = $("#txtPad")[0].selectionEnd = caretbeg + instr.length;
-    $("#rubytype").html("");
+    document.getElementById("txtPad").selectionStart = document.getElementById("txtPad").selectionEnd = caretbeg + instr.length;
+    document.getElementById("rubytype").innerHTML = "";
     lentype = 0;
     delList();
 }
@@ -433,7 +445,7 @@ function upPage() {
     var optionsublist = optionlist.slice(pgBe, pgEn);
     var i;
     for (i = 1; i <= 9; i++) {
-        $("#w" + i).html(optionsublist[i - 1]);
+        document.getElementById("w" + i).innerHTML = optionsublist[i - 1];
     }
 }
 
@@ -452,7 +464,7 @@ function dnPage() {
         pgEn = pgBe + 9;
         optionsublist = optionlist.slice(pgBe, pgEn);
         for (i = 1; i <= 9; i++) {
-            $("#w" + i).html(optionsublist[i - 1]);
+            document.getElementById("w" + i).innerHTML = optionsublist[i - 1];
         }
     } else {
         pgEn = optionlist.length;
@@ -461,7 +473,7 @@ function dnPage() {
         var listsize = pgEn - pgBe;
         whitelist();
         for (i = 1; i <= listsize; i++) {
-            $("#w" + i).html(optionsublist[i - 1]);
+            document.getElementById("w" + i).innerHTML = optionsublist[i - 1];
         }
     }
 }
@@ -618,19 +630,19 @@ function convertpad(direction, maxlevel) {
     var convtxt = "";
     switch (direction) {
         case 0:
-            convtxt = logo2phon($("#txtPad").val(), true, maxlevel);
+            convtxt = logo2phon(document.getElementById("txtPad").value, true, maxlevel);
             break;
         case 1:
-            convtxt = phon2logo($("#txtPad").val(), maxlevel);
+            convtxt = phon2logo(document.getElementById("txtPad").value, maxlevel);
             break;
         default: break;
     }
     if (convtxt.length > 0) {
-        $("#txtPad").css({ 'width': '50%' });
-        $("#txtPadout").css({ 'writing-mode': 'horizontal-tb' });
-        $("#txtPadout").css({ 'display': 'block' });
-        $("#txtPadout").html(convtxt.replace(/\n/g, " <br> "));
-		$("#copy_button").css({ 'display': 'block' });
+        $css(document.getElementById("txtPad"), { 'width': '50%' });
+        $css(document.getElementById("txtPadout"), { 'writing-mode': 'horizontal-tb' });
+        $css(document.getElementById("txtPadout"), { 'display': 'block' });
+        document.getElementById("txtPadout").innerHTML = convtxt.replace(/\n/g, " <br> ");
+		$css(document.getElementById("copy_button"), { 'display': 'block' });
     } else {
         offpad();
     }
@@ -640,7 +652,7 @@ function logo2ipa(accent, maxlevel) {
     var phrase = "";
     var convtxt = "";
     var ipaword;
-    phrase = logo2phon($("#txtPad").val().toLowerCase(), false, maxlevel);
+    phrase = logo2phon(document.getElementById("txtPad").value.toLowerCase(), false, maxlevel);
 
     if (phrase.length > 0) {
         phrase = phrase.replace(/\./g, " | ");
@@ -712,11 +724,11 @@ function logo2ipa(accent, maxlevel) {
             }
         }
         convtxt
-        $("#txtPad").css({ 'width': '50%' });
-        $("#txtPadout").css({ 'writing-mode': 'horizontal-tb' });
-        $("#txtPadout").css({ 'display': 'block' });
-		$("#copy_button").css({ 'display': 'block' });
-        $("#txtPadout").html(convtxt.replace(/\n/g, "<br>").replace(/\r/g, "<br>"));
+        $css(document.getElementById("txtPad"), { 'width': '50%' });
+        $css(document.getElementById("txtPadout"), { 'writing-mode': 'horizontal-tb' });
+        $css(document.getElementById("txtPadout"), { 'display': 'block' });
+		$css(document.getElementById("copy_button"), { 'display': 'block' });
+        document.getElementById("txtPadout").innerHTML = convtxt.replace(/\n/g, "<br>").replace(/\r/g, "<br>");
     } else {
         offpad();
     }
@@ -726,7 +738,7 @@ function logo2roman(maxlevel) {
     var phrase = "";
     var convtxt = "";
     var ipaword;
-    phrase = logo2phon($("#txtPad").val(), false, maxlevel);
+    phrase = logo2phon(document.getElementById("txtPad").value, false, maxlevel);
 
     if (phrase.length > 0) {
         phrase = phrase.replace(/\./g, " | ");
@@ -794,30 +806,30 @@ function logo2roman(maxlevel) {
             }
         }
 
-        $("#txtPad").css({ 'width': '50%' });
-        $("#txtPadout").css({ 'writing-mode': 'horizontal-tb' });
-        $("#txtPadout").css({ 'display': 'block' });
-		$("#copy_button").css({ 'display': 'block' });
-        $("#txtPadout").html(convtxt.replace(/\n/g, "<br>").replace(/\r/g, "<br>"));
+        $css(document.getElementById("txtPad"), { 'width': '50%' });
+        $css(document.getElementById("txtPadout"), { 'writing-mode': 'horizontal-tb' });
+        $css(document.getElementById("txtPadout"), { 'display': 'block' });
+		$css(document.getElementById("copy_button"), { 'display': 'block' });
+        document.getElementById("txtPadout").innerHTML = convtxt.replace(/\n/g, "<br>").replace(/\r/g, "<br>");
     } else {
         offpad();
     }
 }
 
 function focuspad() {
-    if ($("#txtPadout").html() == "") {
+    if (document.getElementById("txtPadout").innerHTML == "") {
         offpad();
     }
 }
 
 function offpad() {
-        $("#txtPadout").css({ 'display': 'none' });
-        $("#txtPadout").css({ 'writing-mode': 'horizontal-tb' });
-		$("#copy_button").css({ 'display': 'none' });
-        $("#txtPad").css({ 'width': '100%' });
+        $css(document.getElementById("txtPadout"), { 'display': 'none' });
+        $css(document.getElementById("txtPadout"), { 'writing-mode': 'horizontal-tb' });
+		$css(document.getElementById("copy_button"), { 'display': 'none' });
+        $css(document.getElementById("txtPad"), { 'width': '100%' });
 }
 function proto(language) {
-    var phrase = $("#txtPad").val();
+    var phrase = document.getElementById("txtPad").value;
     if (phrase == "")
         return "";
 	
@@ -883,11 +895,11 @@ function proto(language) {
             ttt = ttt + " " + nextword;
     }
     if (ttt.length > 0) {
-        $("#txtPad").css({ 'width': '50%' });
-        $("#txtPadout").css({ 'writing-mode': 'horizontal-tb' });
-        $("#txtPadout").css({ 'display': 'block' });
-        $("#txtPadout").html(ttt.replace(/\n/g, " <br> "));
-		$("#copy_button").css({ 'display': 'block' });
+        $css(document.getElementById("txtPad"), { 'width': '50%' });
+        $css(document.getElementById("txtPadout"), { 'writing-mode': 'horizontal-tb' });
+        $css(document.getElementById("txtPadout"), { 'display': 'block' });
+        document.getElementById("txtPadout").innerHTML = ttt.replace(/\n/g, " <br> ");
+		$css(document.getElementById("copy_button"), { 'display': 'block' });
     } else {
         offpad();
     }
@@ -929,7 +941,7 @@ function logo2phon(pad, nospace, maxlevel) {
 }
 
 function roma2phone() {
-    var phrase = $("#txtPad").val().toLowerCase();
+    var phrase = document.getElementById("txtPad").value.toLowerCase();
     var convtxt = "";
     var ipaword;
 
@@ -995,11 +1007,11 @@ function roma2phone() {
             }
         }
         convtxt
-        $("#txtPad").css({ 'width': '50%' });
-        $("#txtPadout").css({ 'writing-mode': 'horizontal-tb' });
-        $("#txtPadout").css({ 'display': 'block' });
-		$("#copy_button").css({ 'display': 'block' });
-        $("#txtPadout").html(convtxt.replace(/\n/g, "<br>").replace(/\r/g, "<br>"));
+        $css(document.getElementById("txtPad"), { 'width': '50%' });
+        $css(document.getElementById("txtPadout"), { 'writing-mode': 'horizontal-tb' });
+        $css(document.getElementById("txtPadout"), { 'display': 'block' });
+		$css(document.getElementById("copy_button"), { 'display': 'block' });
+        document.getElementById("txtPadout").innerHTML = convtxt.replace(/\n/g, "<br>").replace(/\r/g, "<br>");
     } else {
         offpad();
     }
@@ -1416,7 +1428,7 @@ function selExample(word, ruby) {
     var cubostr = "<table>";
     if (quocngu == 1) {
         cubostr += "</table>";
-        $("#example").html(cubostr);
+        document.getElementById("example").innerHTML = cubostr;
         return;
     }
     contents = condb.exec("SELECT cword, c" + opttable + " FROM cmpnom WHERE c" + opttable + " LIKE '" + ruby.replace(/\'/g, "''") + " %' OR c" + opttable + " LIKE '% " + ruby.replace(/\'/g, "''") + "' OR c" + opttable + " LIKE '% " + ruby.replace(/\'/g, "''") + " %'");
@@ -1433,11 +1445,11 @@ function selExample(word, ruby) {
         }
     }
     cubostr += "</table>";
-    $("#example").html(cubostr);
+    document.getElementById("example").innerHTML = cubostr;
     return;
 }
 function listUpdate() {
-    var rubystr = $("#rubytype").text();
+    var rubystr = document.getElementById("rubytype").textContent;
     delList();
     if (rubystr == "")
         return;
@@ -1448,14 +1460,14 @@ function listUpdate() {
         bPgdn = true;
         var i;
         for (i = 1; i <= 9; i++) {
-            $("#w" + i).html(optionlist[i - 1]);
+            document.getElementById("w" + i).innerHTML = optionlist[i - 1];
         }
         setSelectedIndex(1);
     } else {
         var i;
         whitelist();
         for (i = 1; i <= optionlist.length; i++) {
-            $("#w" + i).html(optionlist[i - 1]);
+            document.getElementById("w" + i).innerHTML = optionlist[i - 1];
         }
         setSelectedIndex(1);
     }
@@ -1474,25 +1486,25 @@ function delList() {
 }
 
 function whitelist() {
-    $(".outopt").css({ 'background': 'none', 'color': '#f0e0c0' });
-    $("#w1").html("");
-    $("#w2").html("");
-    $("#w3").html("");
-    $("#w4").html("");
-    $("#w5").html("");
-    $("#w6").html("");
-    $("#w7").html("");
-    $("#w8").html("");
-    $("#w9").html("");
+    document.querySelectorAll(".outopt").forEach(function(el) { $css(el, { 'background': 'none', 'color': '#f0e0c0' }); });
+    document.getElementById("w1").innerHTML = "";
+    document.getElementById("w2").innerHTML = "";
+    document.getElementById("w3").innerHTML = "";
+    document.getElementById("w4").innerHTML = "";
+    document.getElementById("w5").innerHTML = "";
+    document.getElementById("w6").innerHTML = "";
+    document.getElementById("w7").innerHTML = "";
+    document.getElementById("w8").innerHTML = "";
+    document.getElementById("w9").innerHTML = "";
 }
 
 function setSelectedIndex(ind) {
-    if ($("#w" + ind).text() != "") {
+    if (document.getElementById("w" + ind).textContent != "") {
         selectedindex = ind;
-        $(".outopt").css({ 'background': 'none', 'color': '#f0e0c0' });
-        $("#w" + ind).css({ 'background': '#eee', 'color': '#000' });
+        document.querySelectorAll(".outopt").forEach(function(el) { $css(el, { 'background': 'none', 'color': '#f0e0c0' }); });
+        $css(document.getElementById("w" + ind), { 'background': '#eee', 'color': '#000' });
     }
-    $("#txtPad").focus();
+    document.getElementById("txtPad").focus();
 }
 
 function toneNumb(tonechar) {
@@ -5299,18 +5311,18 @@ function speakHokkien(inp) {
 }
 
 function togglekeyboard(evt) {
-    var ele = $("#keyboardbutton");
-    if (ele.hasClass('active')) {
-        ele.removeClass('active');
-        $("#keyboard").css({ display: 'none' });
+    var ele = document.getElementById("keyboardbutton");
+    if (ele.classList.contains('active')) {
+        ele.classList.remove('active');
+        $css(document.getElementById("keyboard"), { display: 'none' });
     }
     else {
-        ele.addClass('active');
-        $("#keyboard").css({ display: 'block' });
+        ele.classList.add('active');
+        $css(document.getElementById("keyboard"), { display: 'block' });
         loadkeyboard();
     }
 
-    $("#txtPad").focus();
+    document.getElementById("txtPad").focus();
 }
 
 function loadkeyboard() {
@@ -5318,9 +5330,9 @@ function loadkeyboard() {
         defaultkeyboard();
         return;
     }
-    if ($('#keyboard').css("display") == "block") {
-		$('.vk-btn').css("font-size", 18);
-		$('.vk-btn').css("line-height", 1.5);
+    if (document.getElementById('keyboard').style.display == "block") {
+		document.querySelectorAll('.vk-btn').forEach(function(el) { el.style.setProperty('font-size', (18) + 'px'); });
+		document.querySelectorAll('.vk-btn').forEach(function(el) { el.style.setProperty('line-height', (1.5) + ''); });
         switch (quocngu) {
             case 0:
             default:
@@ -5331,56 +5343,56 @@ function loadkeyboard() {
 }
 
 function defaultkeyboard() {
-    $('#K192').html("<br>`");
-    $('#K48').html("<br>0");
-    $('#K49').html("<br>1");
-    $('#K50').html("<br>2");
-    $('#K51').html("<br>3");
-    $('#K52').html("<br>4");
-    $('#K53').html("<br>5");
-    $('#K54').html("<br>6");
-    $('#K55').html("<br>7");
-    $('#K56').html("<br>8");
-    $('#K57').html("<br>9");
-    $('#K81').html("<br>q");
-    $('#K87').html("<br>w");
-    $('#K69').html("<br>e");
-    $('#K82').html("<br>r");
-    $('#K84').html("<br>t");
-    $('#K89').html("<br>y");
-    $('#K85').html("<br>u");
-    $('#K73').html("<br>i");
-    $('#K79').html("<br>o");
-    $('#K80').html("<br>p");
-    $('#K219').html("<br>[");
-    $('#K221').html("<br>]");
-    $('#K65').html("<br>a");
-    $('#K83').html("<br>s");
-    $('#K68').html("<br>d");
-    $('#K70').html("<br>f");
-    $('#K71').html("<br>g");
-    $('#K72').html("<br>h");
-    $('#K74').html("<br>j");
-    $('#K75').html("<br>k");
-    $('#K76').html("<br>l");
-    $('#K186').html("<br>;");
-    $('#K222').html("<br>'");
-    $('#K90').html("<br>z");
-    $('#K88').html("<br>x");
-    $('#K67').html("<br>c");
-    $('#K86').html("<br>v");
-    $('#K66').html("<br>b");
-    $('#K78').html("<br>n");
-    $('#K77').html("<br>m");
-    $('#K188').html("<br>,");
-    $('#K190').html("<br>.");
-    $('#K191').html("<br>/");
-    $('#K16R').html("<br>⇧");
-    $('#K16L').html("<br>⇧");
+    document.getElementById('K192').innerHTML = "<br>`";
+    document.getElementById('K48').innerHTML = "<br>0";
+    document.getElementById('K49').innerHTML = "<br>1";
+    document.getElementById('K50').innerHTML = "<br>2";
+    document.getElementById('K51').innerHTML = "<br>3";
+    document.getElementById('K52').innerHTML = "<br>4";
+    document.getElementById('K53').innerHTML = "<br>5";
+    document.getElementById('K54').innerHTML = "<br>6";
+    document.getElementById('K55').innerHTML = "<br>7";
+    document.getElementById('K56').innerHTML = "<br>8";
+    document.getElementById('K57').innerHTML = "<br>9";
+    document.getElementById('K81').innerHTML = "<br>q";
+    document.getElementById('K87').innerHTML = "<br>w";
+    document.getElementById('K69').innerHTML = "<br>e";
+    document.getElementById('K82').innerHTML = "<br>r";
+    document.getElementById('K84').innerHTML = "<br>t";
+    document.getElementById('K89').innerHTML = "<br>y";
+    document.getElementById('K85').innerHTML = "<br>u";
+    document.getElementById('K73').innerHTML = "<br>i";
+    document.getElementById('K79').innerHTML = "<br>o";
+    document.getElementById('K80').innerHTML = "<br>p";
+    document.getElementById('K219').innerHTML = "<br>[";
+    document.getElementById('K221').innerHTML = "<br>]";
+    document.getElementById('K65').innerHTML = "<br>a";
+    document.getElementById('K83').innerHTML = "<br>s";
+    document.getElementById('K68').innerHTML = "<br>d";
+    document.getElementById('K70').innerHTML = "<br>f";
+    document.getElementById('K71').innerHTML = "<br>g";
+    document.getElementById('K72').innerHTML = "<br>h";
+    document.getElementById('K74').innerHTML = "<br>j";
+    document.getElementById('K75').innerHTML = "<br>k";
+    document.getElementById('K76').innerHTML = "<br>l";
+    document.getElementById('K186').innerHTML = "<br>;";
+    document.getElementById('K222').innerHTML = "<br>'";
+    document.getElementById('K90').innerHTML = "<br>z";
+    document.getElementById('K88').innerHTML = "<br>x";
+    document.getElementById('K67').innerHTML = "<br>c";
+    document.getElementById('K86').innerHTML = "<br>v";
+    document.getElementById('K66').innerHTML = "<br>b";
+    document.getElementById('K78').innerHTML = "<br>n";
+    document.getElementById('K77').innerHTML = "<br>m";
+    document.getElementById('K188').innerHTML = "<br>,";
+    document.getElementById('K190').innerHTML = "<br>.";
+    document.getElementById('K191').innerHTML = "<br>/";
+    document.getElementById('K16R').innerHTML = "<br>⇧";
+    document.getElementById('K16L').innerHTML = "<br>⇧";
 }
 
 function share() {
-  navigator.clipboard.writeText($("#txtPadout").html().replace(/ <br> /g, "\n"));
+  navigator.clipboard.writeText(document.getElementById("txtPadout").innerHTML.replace(/ <br> /g, "\n"));
 }
 String.prototype.startsWith = function (str) {
     return this.indexOf(str) == 0;

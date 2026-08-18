@@ -1,4 +1,4 @@
-﻿var curtxtPadlength = 0;
+var curtxtPadlength = 0;
 
 
 
@@ -11,9 +11,11 @@ function txtPadKeyDown(evt) {
 function txtPadKeyInput(evt) {
 
     var evtK = evt.keyCode || evt.charCode;
-    var rubystr = $("#rubytype").text();
+    var txtPadEl = document.getElementById("txtPad");
+    var rubytypeEl = document.getElementById("rubytype");
+    var rubystr = rubytypeEl.textContent;
 
-    var curcaret = $("#txtPad")[0].selectionEnd;
+    var curcaret = txtPadEl.selectionEnd;
 
     var newtxtPadlength =
         document.getElementById("txtPad").value.length;
@@ -27,7 +29,7 @@ function txtPadKeyInput(evt) {
 
         delList();
 
-        $("#rubytype").html("");
+        rubytypeEl.innerHTML = "";
 
         lentype = 0;
 
@@ -39,7 +41,7 @@ function txtPadKeyInput(evt) {
 
         if (curtxtPadlength - newtxtPadlength > 1) {
 
-            $("#rubytype").html("");
+            rubytypeEl.innerHTML = "";
 
             listUpdate();
 
@@ -53,9 +55,8 @@ function txtPadKeyInput(evt) {
 
         if (rubystr.length > 0) {
 
-            $("#rubytype").html(
-                rubystr.substring(0, rubystr.length - 1)
-            );
+            rubytypeEl.innerHTML =
+                rubystr.substring(0, rubystr.length - 1);
 
             lentype--;
 
@@ -82,7 +83,7 @@ function txtPadKeyInput(evt) {
         // ENTER
         if (evtK == 13) {
 
-            $("#rubytype").html("");
+            rubytypeEl.innerHTML = "";
 
             listUpdate();
 
@@ -99,34 +100,35 @@ function txtPadKeyInput(evt) {
         // SPACE
         if (evtC == ' ') {
 
-            $("#txtPad").val(
-                $("#txtPad").val().substring(0, curcaret - 1) +
-                $("#txtPad").val().substring(
+            txtPadEl.value =
+                txtPadEl.value.substring(0, curcaret - 1) +
+                txtPadEl.value.substring(
                     curcaret,
-                    $("#txtPad").val().length
-                )
-            );
+                    txtPadEl.value.length
+                );
 
-            $("#txtPad")[0].selectionStart =
-            $("#txtPad")[0].selectionEnd =
+            txtPadEl.selectionStart =
+            txtPadEl.selectionEnd =
                 curcaret - 1;
 
             if (optionlist.length != 0) {
 
                 evt.preventDefault();
 
+                var wordEl = document.getElementById("w" + selectedindex);
+
                 conlentmp =
-                    $("#w" + selectedindex).text().length;
+                    wordEl.textContent.length;
 
                 putWord(
-                    $("#w" + selectedindex).text()
+                    wordEl.textContent
                 );
             }
 
             curtxtPadlength =
                 document.getElementById("txtPad").value.length;
 
-            $("#txtPad").focus();
+            txtPadEl.focus();
 
             return;
         }
@@ -137,17 +139,16 @@ function txtPadKeyInput(evt) {
             (evtC == ',')
         ) {
 
-            $("#txtPad").val(
-                $("#txtPad").val().substring(0, curcaret - 1) +
+            txtPadEl.value =
+                txtPadEl.value.substring(0, curcaret - 1) +
                 evtC +
-                $("#txtPad").val().substring(
+                txtPadEl.value.substring(
                     curcaret,
-                    $("#txtPad").val().length
-                )
-            );
+                    txtPadEl.value.length
+                );
 
-            $("#txtPad")[0].selectionStart =
-            $("#txtPad")[0].selectionEnd =
+            txtPadEl.selectionStart =
+            txtPadEl.selectionEnd =
                 curcaret - 1;
 
             if (
@@ -162,7 +163,7 @@ function txtPadKeyInput(evt) {
             if (optionlist.length != 0) {
 
                 putWord(
-                    $("#w" + selectedindex).text()
+                    document.getElementById("w" + selectedindex).textContent
                 );
             }
 
@@ -172,15 +173,14 @@ function txtPadKeyInput(evt) {
 
             lentype = 0;
 
-            $("#txtPad")[0].selectionStart =
-            $("#txtPad")[0].selectionEnd =
-                $("#txtPad")[0].selectionEnd + 1;
+            txtPadEl.selectionStart =
+            txtPadEl.selectionEnd =
+                txtPadEl.selectionEnd + 1;
 
             lentype++;
 
-            $("#rubytype").html(
-                typeChar($("#rubytype").text(), evtC)
-            );
+            rubytypeEl.innerHTML =
+                typeChar(rubytypeEl.textContent, evtC);
         }
 
         // Normal character
@@ -188,9 +188,8 @@ function txtPadKeyInput(evt) {
 
             lentype++;
 
-            $("#rubytype").html(
-                typeChar($("#rubytype").text(), evtC)
-            );
+            rubytypeEl.innerHTML =
+                typeChar(rubytypeEl.textContent, evtC);
         }
 
         listUpdate();
@@ -212,7 +211,7 @@ function rightopt() {
     }
 
     if (carpos == -1)
-        carpos = $('#txtPad')[0].selectionEnd;
+        carpos = document.getElementById('txtPad').selectionEnd;
 
     return;
 }
@@ -227,7 +226,7 @@ function leftopt() {
     }
 
     if (carpos == -1)
-        carpos = $('#txtPad')[0].selectionEnd;
+        carpos = document.getElementById('txtPad').selectionEnd;
 
     return;
 }
