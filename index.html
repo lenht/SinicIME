@@ -5,8 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sinogram IME - Linguaevum</title>
 <link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
-<link href="./Content/bootstrap.min.css" rel="stylesheet">
-<link href="./Content/Site.min.css" rel="stylesheet">
+<link href="./css/styles.css" rel="stylesheet">
 
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-T99S46KJ26"></script>
 <script>
@@ -15,65 +14,6 @@
   gtag('js', new Date());
   gtag('config', 'G-T99S46KJ26');
 </script>
-
-<style>
-#copy_button {
-    display: none;
-    background-color: #c197239c;
-    color: #fff;
-    text-align: center;
-    border-radius: 6px;
-    padding: 5px;
-    top: 0;
-    right: 50%;
-    position: absolute;
-    z-index: 9999;
-}
-
-/* Replaces the old two-page split: same text pad, sized per breakpoint */
-#txtPad, #txtPadout {
-    padding: 3px;
-    width: 100%;
-    height: calc(100vh - 150px);
-    font-size: 20px;
-}
-
-@media (max-width: 767px) {
-    #txtPad, #txtPadout {
-        height: calc(100vh - 90px);
-        font-size: 16px;
-    }
-}
-
-@media (max-width: 698px) {
-    .jumbotron {
-        margin-top: 1px;
-    }
-}
-
-@media (max-width: 639px) {
-    .jumbotron {
-        margin-top: 34px;
-    }
-}
-
-.pager {
-    width: 100%;
-    text-align: center;
-    color: #000;
-}
-.pager td {
-    background: #c19723;
-    font-size: 12px;
-    cursor: pointer;
-}
-.pager td:first-child {
-    border-right: solid 1px;
-}
-.pager td:last-child {
-    border-left: solid 1px;
-}
-</style>
 </head>
 <body>
 
@@ -93,14 +33,14 @@
 </div>
 
 <div class="jumbotron">
-    <table style="width: 100%; height: 100%;">
+    <table class="jumbotron-layout-table">
         <tr>
-            <td style="width: 100%;">
+            <td class="jumbotron-main-cell">
                 <textarea id="txtPad" onclick="offpad()"></textarea>
-                <div id="txtPadout" style="display: none; overflow: auto; background-color: #fff; color: #000; float: right;" onchange="focuspad()" onfocus="focuspad()"></div>
+                <div id="txtPadout" onchange="focuspad()" onfocus="focuspad()"></div>
                 <button id="copy_button" onclick="share()">Copy</button>
             </td>
-            <td valign="top" style="padding: 1px 2px;">
+            <td class="jumbotron-side-cell">
                 <table id="outlist">
                     <tr>
                         <td></td>
@@ -129,9 +69,9 @@
     </table>
 </div>
 
-<nav class="navbar navbar-inverse" style="background-image: url('./Resources/wave.png'); border-radius: 0; border: 0; margin: 0;">
+<nav class="navbar navbar-inverse wave-nav">
     <div class="container-fluid">
-        <div class="navbar-header" style="float: left;">
+        <div class="navbar-header navbar-header-left">
             <ul class="nav navbar-nav navbar-left">
                 <li class="dropup">
                     <a class="dropdown-toggle" data-toggle="dropdown">
@@ -155,10 +95,10 @@
                 </li>
             </ul>
         </div>
-        <div class="navbar-header" style="float: right;">
+        <div class="navbar-header navbar-header-right">
             <ul class="nav navbar-nav navbar-right">
-                <li class="dropup" style="background-color: #121890">
-                    <a style="padding: 0px;" class="dropdown-toggle" data-toggle="dropdown">
+                <li class="dropup convert-dropup">
+                    <a class="dropdown-toggle convert-dropdown-toggle" data-toggle="dropdown">
                         <span>
                             <img class="funcbutt transbutt" src="./Resources/transcript.png"/>
                         </span>
@@ -173,11 +113,11 @@
 </nav>
 
 <footer>
-    <br><p style="margin: 0 0 0 30px; font-size: 12px; line-height: 1.2;">Author: Sky Darmos</p>
-    <p style="margin: 0 0 0 30px; font-size: 12px; line-height: 1.2;">Programmers: Trần Thanh Trúc (陳青竹) & Nguyễn Việt Khôi (阮越魁)</p>
-    <p style="margin: 0 0 0 30px; font-size: 12px; line-height: 1.2;">Etymology consultant: Nguyễn Việt Khôi (阮越魁)</p><br>
-    <p style="margin: 0 0 0 30px; font-size: 12px; line-height: 1.2;">© 2024 - 2026 - Sky Darmos - Vietnamese Etymography (chữ Nôm)</p>
-    <p style="margin: 0 0 0 30px; font-size: 12px; line-height: 1.2;">Features more than 48,000 Vietnamese single and compound words. </p>
+    <br><p class="footer-line">Author: Sky Darmos</p>
+    <p class="footer-line">Programmers: Trần Thanh Trúc (陳青竹) & Nguyễn Việt Khôi (阮越魁)</p>
+    <p class="footer-line">Etymology consultant: Nguyễn Việt Khôi (阮越魁)</p><br>
+    <p class="footer-line">© 2024 - 2026 - Sky Darmos - Vietnamese Etymography (chữ Nôm)</p>
+    <p class="footer-line">Features more than 48,000 Vietnamese single and compound words. </p>
 </footer>
 
 <script src="./Scripts/sql.js"></script>
