@@ -956,18 +956,6 @@ input[type=checkbox].input-validation-error {
 }
 
 @font-face {
-  font-family: Yogyakarta;
-  src: url('../fonts/Yogyakarta.ttf') format('truetype');
-  font-display: swap
-}
-
-@font-face {
-  font-family: "Aksara Bali";
-  src: url('../fonts/AksaraBali.ttf') format('truetype');
-  font-display: swap
-}
-
-@font-face {
   font-family: Sawndip;
   src: url('../fonts/Sawndip0.ttf') format('truetype');
   font-display: swap
@@ -1006,18 +994,6 @@ input[type=checkbox].input-validation-error {
 @font-face {
   font-family: "BabelStone Han";
   src: url('../fonts/BabelStoneHan.ttf') format('truetype');
-  font-display: swap
-}
-
-@font-face {
-  font-family: Sukhothai;
-  src: url('../fonts/Sukhothai.ttf') format('truetype');
-  font-display: swap
-}
-
-@font-face {
-  font-family: "Bravura Text";
-  src: url('../fonts/BravuraText.ttf') format('truetype');
   font-display: swap
 }
 
@@ -1073,7 +1049,7 @@ input[type=checkbox].input-validation-error {
 #txtPadout {
   min-height: 500px;
   resize: none;
-  font-family: Lexend, SimSun, SimSun-ExtB, SimSun-ExtG, Jigmo3, "BabelStone Han", Sawndip, "Nom Na Tong", 'Han-Nom Gothic Supplement';
+  font-family: Lexend, SimSun, SimSun-ExtB, SimSun-ExtG, Jigmo3, HanaMinA, HanaMinB, "BabelStone Han", Sawndip, "Nom Na Tong", 'Han-Nom Gothic Supplement';
   background-color: #0808088c;
   color: #fff;
   line-height: normal

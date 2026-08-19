@@ -150,10 +150,11 @@ function myCheck(boxclick) {
 
 function opttableselect(tablesel) {
     quocngu = tablesel;
-    $css(document.getElementById("keyboard"), { 'font-family': 'Lexend, Tahoma, sans-serif, "Helvetica Neue", Helvetica, Arial, SimSun, FSung-2, FSung-3, "BabelStone Han", Sawndip, SimSun-ExtB, SimSun-ExtG, Jigmo3, "Nom Na Tong", "Han-Nom Gothic Supplement"' });
-    $css(document.body, { 'font-family': 'Lexend, Tahoma, sans-serif, "Helvetica Neue", Helvetica, Arial, SimSun, FSung-2, FSung-3, "BabelStone Han", Sawndip, SimSun-ExtB, SimSun-ExtG, Jigmo3, "Nom Na Tong", "Han-Nom Gothic Supplement"' });
-    $css(document.getElementById("txtPad"), { 'font-family': 'Cambria, serif, Tahoma, sans-serif, "Helvetica Neue", Helvetica, Arial, SimSun, FSung-2, FSung-3, "BabelStone Han", Sawndip, SimSun-ExtB, SimSun-ExtG, Jigmo3, "Nom Na Tong", "Han-Nom Gothic Supplement"' });
-    $css(document.getElementById("txtPadout"), { 'font-family': 'Cambria, serif, Tahoma, sans-serif, "Helvetica Neue", Helvetica, Arial, SimSun, SimSun-ExtB, SimSun-ExtG, Jigmo3, "BabelStone Han", Sawndip, "Nom Na Tong", "Han-Nom Gothic Supplement"' });
+    var vietSinoFontStack = 'Lexend, SimSun, SimSun-ExtB, SimSun-ExtG, Jigmo3, HanaMinA, HanaMinB, "BabelStone Han", Sawndip, "Nom Na Tong", "Han-Nom Gothic Supplement"';
+    $css(document.getElementById("keyboard"), { 'font-family': vietSinoFontStack });
+    $css(document.body, { 'font-family': vietSinoFontStack });
+    $css(document.getElementById("txtPad"), { 'font-family': vietSinoFontStack });
+    $css(document.getElementById("txtPadout"), { 'font-family': vietSinoFontStack });
     switch (quocngu) {
         case 0:
         default: opttable = "rubynom";
