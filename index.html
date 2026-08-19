@@ -17,7 +17,6 @@
 </head>
 <body>
 
-<input type="hidden" id="Vertical" value="Vertical">
 <input type="hidden" id="Hannom" value="Hán Nôm">
 <input type="hidden" id="DictGuide" value="Press SHIFT">
 
@@ -97,15 +96,8 @@
         </div>
         <div class="navbar-header navbar-header-right">
             <ul class="nav navbar-nav navbar-right">
-                <li class="dropup convert-dropup">
-                    <a class="dropdown-toggle convert-dropdown-toggle" data-toggle="dropdown">
-                        <span>
-                            <img class="funcbutt transbutt" src="./Resources/transcript.png"/>
-                        </span>
-                    </a>
-                    <ul id="accentipa" class="dropdown-menu">
-                        <li onclick="convertpad(1,20)"><a>→ 文</a></li>
-                    </ul>
+                <li class="convert-item">
+                    <a class="convert-link" onclick="convertpad(1,20)">Automatic Quốc Ngữ → Nôm conversion</a>
                 </li>
             </ul>
         </div>

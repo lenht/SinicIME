@@ -47,7 +47,6 @@ var optruby = "ruby";
 var optlev = "and level>1";
 var sugCB = false;
 var quocngu = 0;
-var convertdeftext = '<li onclick="convertpad(1,20)"><a>→ 文</a></li><li onclick="tovertical()"><a>' + document.getElementById('Vertical').value + '</a></li>';
 
 var oo = false;
 
@@ -113,15 +112,6 @@ function virtualtype(key) {
         document.getElementById("txtPad").value = value.slice(0, start) + key + value.slice(end);
         document.getElementById("txtPad").selectionStart = document.getElementById("txtPad").selectionEnd = start + key.length;
     }
-}
-
-function tovertical() {
-    $css(document.getElementById("txtPad"), { 'width': '50%' });
-    $css(document.getElementById("txtPadout"), { 'writing-mode': 'vertical-rl' });
-    $css(document.getElementById("txtPadout"), { 'display': 'block' });
-    $css(document.getElementById("copy_button"), { 'display': 'block' });
-    var vertxt = document.getElementById("txtPad").value.replace(/\n/g, "<br>").replace(/、/g, "︑").replace(/。/g, "︒").replace(/：/g, "︓").replace(/；/g, "︔").replace(/！/g, "︕").replace(/？/g, "︖").replace(/…/g, "︙");
-    document.getElementById("txtPadout").innerHTML = vertxt;
 }
 
 function myCheck(boxclick) {
