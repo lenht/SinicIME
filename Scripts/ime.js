@@ -20,7 +20,6 @@ var kblist = ["E→文"];
 var keyboard = 0;
 var contents = [];
 var condb;
-var condb2;
 var conlenbuf = 0;
 var conlentmp = 0;
 var conlentail = 0;
@@ -83,18 +82,6 @@ xhr.onerror = function () {
 };
 
 xhr.send();
-
-var xhr2 = new XMLHttpRequest();
-xhr2.open('GET', './Resources/proto.jpg', true);
-xhr2.responseType = 'arraybuffer';
-xhr2.onload = function (e) {
-    var uInt8Array = new Uint8Array(this.response);
-    condb2 = new SQL.Database(uInt8Array);
-    contents = condb2.exec("SELECT ruby FROM ProtoVietic where word='䏧' ");
-    // contents is now [{columns:['col1','col2',...], values:[[first row], [second row], ...]}]
-    console.log(contents[0].values[0]);
-};
-xhr2.send();
 
 function isNoSpaceLang(qn) {
     // All previously no-space languages (Hangul, Kana, Thai, Lao, Tai Tham,
@@ -842,82 +829,6 @@ function offpad() {
         $css(document.getElementById("txtPadout"), { 'writing-mode': 'horizontal-tb' });
 		$css(document.getElementById("copy_button"), { 'display': 'none' });
         $css(document.getElementById("txtPad"), { 'width': '100%' });
-}
-function proto(language) {
-    var phrase = document.getElementById("txtPad").value;
-    if (phrase == "")
-        return "";
-	
-    var outputarr = [];
-    var sss = "";
-    var word = phrase;
-    var k;
-    var sql = "";
-    var fullchar;
-
-
-    for (k = 0; k != word.length; k++) {
-        if ((word[k].charCodeAt(0) < 0xD800) || (word[k].charCodeAt(0) >= 0xE000)) {
-            fullchar = word[k];
-        } else {
-            fullchar = word[k] + word[k + 1];
-            k++;
-        }
-
-
-        sql = "select ruby from " + language + " where word='" + fullchar+"'";
-        contents = condb2.exec(sql);
-        if (contents.length != 0) {
-            sss = contents[0].values[0][0];
-                for (q = 1; q < contents[0].values.length; q++) {
-                    sss = sss + "/" + contents[0].values[q][0];
-                }
-        }
-
-        {
-            if (sss.length > 0)
-                outputarr.push(sss);
-            else
-                outputarr.push("$" + fullchar);
-        }
-        sss = "";
-    }
-	
-    var i;
-    var ttt;
-    ttt = outputarr[0].replace(/\$/g, "");
-    for (i = 1; i < outputarr.length; i++) {
-        var nextword = "";
-        nextword = outputarr[i];
-        
-        if (nextword.startsWith('$')) {
-            nextword = outputarr[i].substring(1);
-            if ("。、，：；？！…".includes(nextword)) {
-                nextword = nextword.replace(/。/g, ".");
-                nextword = nextword.replace(/、/g, ",");
-                nextword = nextword.replace(/：/g, ":");
-                nextword = nextword.replace(/；/g, ";");
-                nextword = nextword.replace(/？/g, "?");
-                nextword = nextword.replace(/！/g, "!");
-                nextword = nextword.replace(/，/g, ",");
-                if ((nospace) && (isNoSpaceLang(quocngu)))
-                    nextword += " ";
-            }
-            ttt = ttt + nextword;
-        } else if (ttt.slice(-1) == "\n")
-            ttt = ttt + nextword;
-        else
-            ttt = ttt + " " + nextword;
-    }
-    if (ttt.length > 0) {
-        $css(document.getElementById("txtPad"), { 'width': '50%' });
-        $css(document.getElementById("txtPadout"), { 'writing-mode': 'horizontal-tb' });
-        $css(document.getElementById("txtPadout"), { 'display': 'block' });
-        document.getElementById("txtPadout").innerHTML = ttt.replace(/\n/g, " <br> ");
-		$css(document.getElementById("copy_button"), { 'display': 'block' });
-    } else {
-        offpad();
-    }
 }
 function logo2phon(pad, nospace, maxlevel) {
     if (pad == "")
