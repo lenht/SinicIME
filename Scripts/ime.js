@@ -1,7 +1,3 @@
-String.prototype.replaceLast = function (search, replace) {
-    return this.replace(new RegExp(search + "([^" + search + "]*)$"), replace + "$1");
-}
-
 // Minimal replacement for jQuery's $(el).css({...}) — sets each style
 // property via CSSStyleDeclaration.setProperty so hyphenated CSS property
 // names (e.g. 'font-family', 'writing-mode') work without conversion to
@@ -89,46 +85,9 @@ function isNoSpaceLang(qn) {
     return false;
 }
 
-function virtualtype(key) {
-    document.getElementById('txtPad').dispatchEvent(new KeyboardEvent('keydown', { 'key': key, 'keyCode': key.charCodeAt(0), 'charCode': key.charCodeAt(0), 'which': key.charCodeAt(0), 'bubbles': true, 'cancelable': true, 'returnValue': true, 'composed': true }));
-    document.getElementById('txtPad').dispatchEvent(new KeyboardEvent('keypress', { 'key': key, 'keyCode': key.charCodeAt(0), 'charCode': key.charCodeAt(0), 'which': key.charCodeAt(0), 'bubbles': true, 'cancelable': true, 'returnValue': true, 'composed': true }));
-    if (key != " ") {
-        var value = document.getElementById("txtPad").value;
-        var start = document.getElementById("txtPad").selectionStart;
-        var end = document.getElementById("txtPad").selectionEnd;
-        document.getElementById("txtPad").value = value.slice(0, start) + key + value.slice(end);
-        document.getElementById("txtPad").selectionStart = document.getElementById("txtPad").selectionEnd = start + key.length;
-    }
-}
-
-function myCheck(boxclick) {
-    var ele;
-    switch (boxclick) {
-        case 0: ele = document.getElementById("borrowings"); break;
-        case 1: ele = document.getElementById("variants"); break;
-        case 2: ele = document.getElementById("autocomplete"); break;
-        default: break;
-    }
-    if (ele.classList.contains('active'))
-        ele.classList.remove('active');
-    else
-        ele.classList.add('active');
-
-    optlev = "and level>1";
-    if (document.getElementById("variants").classList.contains('active') && document.getElementById("borrowings").classList.contains('active'))
-        optlev = "";
-    else if (document.getElementById("variants").classList.contains('active') && !document.getElementById("borrowings").classList.contains('active'))
-        optlev = "and level>0";
-    else if (document.getElementById("borrowings").classList.contains('active'))
-        optlev = "and (level>1 or level=0)";
-    sugCB = document.getElementById("autocomplete").classList.contains('active');
-    document.getElementById("txtPad").focus();
-}
-
 function opttableselect(tablesel) {
     quocngu = tablesel;
     var vietSinoFontStack = 'Lexend, SimSun, SimSun-ExtB, SimSun-ExtG, Jigmo3, HanaMinA, HanaMinB, "BabelStone Han", Sawndip, "Nom Na Tong", "Han-Nom Gothic Supplement"';
-    $css(document.getElementById("keyboard"), { 'font-family': vietSinoFontStack });
     $css(document.body, { 'font-family': vietSinoFontStack });
     $css(document.getElementById("txtPad"), { 'font-family': vietSinoFontStack });
     $css(document.getElementById("txtPadout"), { 'font-family': vietSinoFontStack });
@@ -138,7 +97,6 @@ function opttableselect(tablesel) {
         
             break;
     }
-    loadkeyboard();
     document.getElementById("opttablename").innerHTML = opttablelist[tablesel];
     document.getElementById("txtPad").focus();
 }
@@ -146,7 +104,6 @@ function opttableselect(tablesel) {
 function optkeyboard(kbsel) {
     keyboard = kbsel;
     document.getElementById("kbname").innerHTML = kblist[kbsel];
-    loadkeyboard();
     document.getElementById("txtPad").focus();
 }
 
@@ -1745,87 +1702,6 @@ function mcPINYIN(c, m) {
             break;
     }
     return c;
-}
-
-function togglekeyboard(evt) {
-    var ele = document.getElementById("keyboardbutton");
-    if (ele.classList.contains('active')) {
-        ele.classList.remove('active');
-        $css(document.getElementById("keyboard"), { display: 'none' });
-    }
-    else {
-        ele.classList.add('active');
-        $css(document.getElementById("keyboard"), { display: 'block' });
-        loadkeyboard();
-    }
-
-    document.getElementById("txtPad").focus();
-}
-
-function loadkeyboard() {
-    if (keyboard == 2) {
-        defaultkeyboard();
-        return;
-    }
-    if (document.getElementById('keyboard').style.display == "block") {
-		document.querySelectorAll('.vk-btn').forEach(function(el) { el.style.setProperty('font-size', (18) + 'px'); });
-		document.querySelectorAll('.vk-btn').forEach(function(el) { el.style.setProperty('line-height', (1.5) + ''); });
-        switch (quocngu) {
-            case 0:
-            default:
-                defaultkeyboard();
-                break;
-        }
-    }
-}
-
-function defaultkeyboard() {
-    document.getElementById('K192').innerHTML = "<br>`";
-    document.getElementById('K48').innerHTML = "<br>0";
-    document.getElementById('K49').innerHTML = "<br>1";
-    document.getElementById('K50').innerHTML = "<br>2";
-    document.getElementById('K51').innerHTML = "<br>3";
-    document.getElementById('K52').innerHTML = "<br>4";
-    document.getElementById('K53').innerHTML = "<br>5";
-    document.getElementById('K54').innerHTML = "<br>6";
-    document.getElementById('K55').innerHTML = "<br>7";
-    document.getElementById('K56').innerHTML = "<br>8";
-    document.getElementById('K57').innerHTML = "<br>9";
-    document.getElementById('K81').innerHTML = "<br>q";
-    document.getElementById('K87').innerHTML = "<br>w";
-    document.getElementById('K69').innerHTML = "<br>e";
-    document.getElementById('K82').innerHTML = "<br>r";
-    document.getElementById('K84').innerHTML = "<br>t";
-    document.getElementById('K89').innerHTML = "<br>y";
-    document.getElementById('K85').innerHTML = "<br>u";
-    document.getElementById('K73').innerHTML = "<br>i";
-    document.getElementById('K79').innerHTML = "<br>o";
-    document.getElementById('K80').innerHTML = "<br>p";
-    document.getElementById('K219').innerHTML = "<br>[";
-    document.getElementById('K221').innerHTML = "<br>]";
-    document.getElementById('K65').innerHTML = "<br>a";
-    document.getElementById('K83').innerHTML = "<br>s";
-    document.getElementById('K68').innerHTML = "<br>d";
-    document.getElementById('K70').innerHTML = "<br>f";
-    document.getElementById('K71').innerHTML = "<br>g";
-    document.getElementById('K72').innerHTML = "<br>h";
-    document.getElementById('K74').innerHTML = "<br>j";
-    document.getElementById('K75').innerHTML = "<br>k";
-    document.getElementById('K76').innerHTML = "<br>l";
-    document.getElementById('K186').innerHTML = "<br>;";
-    document.getElementById('K222').innerHTML = "<br>'";
-    document.getElementById('K90').innerHTML = "<br>z";
-    document.getElementById('K88').innerHTML = "<br>x";
-    document.getElementById('K67').innerHTML = "<br>c";
-    document.getElementById('K86').innerHTML = "<br>v";
-    document.getElementById('K66').innerHTML = "<br>b";
-    document.getElementById('K78').innerHTML = "<br>n";
-    document.getElementById('K77').innerHTML = "<br>m";
-    document.getElementById('K188').innerHTML = "<br>,";
-    document.getElementById('K190').innerHTML = "<br>.";
-    document.getElementById('K191').innerHTML = "<br>/";
-    document.getElementById('K16R').innerHTML = "<br>⇧";
-    document.getElementById('K16L').innerHTML = "<br>⇧";
 }
 
 function share() {
