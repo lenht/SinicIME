@@ -801,6 +801,58 @@ function phon2logo(pad, maxlevel) {
     return ttt;
 }
 
+// Compound-word "exact key" + "key + more" prefix lookup against cmpnom.
+// Shared by selPhone (matches on cword, the Sino/Nom side, joined with
+// ":") and selChar (matches on c<opttable>, the Quoc Ngu/ruby side,
+// joined with " "). Appends results onto pcubo and returns the counts
+// the caller's state dispatch needs.
+//   matchCol/selectCol : cmpnom columns to match against / read from
+//   key                : match key, already escaped by the caller if needed
+//                        (selPhone passes it raw; selChar passes sqlEscape(key))
+//   size               : number of pieces the exact-match value is truncated to
+//   matchDelim         : delimiter used for the "LIKE key<delim>%" prefix search
+//   splitDelim         : delimiter used to split selectCol's stored value
+//   extraGuard         : extra WHERE-clause fragment (selPhone's NOT NULL/
+//                        empty checks), or "" (selChar has none)
+function compoundLookup(matchCol, selectCol, key, size, matchDelim, splitDelim, extraGuard, pcubo) {
+    var contents = condb.exec("SELECT " + selectCol + ", " + matchCol + " FROM cmpnom WHERE " + matchCol + " = '" + key + "'" + extraGuard);
+    var i, j, split = null;
+    if (contents.length != 0) {
+        for (i = 0; i < contents[0].values.length; i++) {
+            split = contents[0].values[i][0].split(splitDelim);
+            var xstr = [];
+            for (j = 0; j != size; j++)
+                xstr.push(split[j]);
+            pcubo.push(xstr);
+        }
+    }
+    var excSz = pcubo.length;
+
+    contents = condb.exec("SELECT " + selectCol + ", " + matchCol + " FROM cmpnom WHERE " + matchCol + " like '" + key + matchDelim + "%'" + extraGuard);
+    split = null;
+    var rubo = [];
+    if (contents.length != 0) {
+        for (i = 0; i < contents[0].values.length; i++) {
+            split = contents[0].values[i][0].split(splitDelim);
+            var xstr2 = [];
+            for (j = 0; j != split.length; j++)
+                xstr2.push(split[j]);
+            rubo.push(xstr2);
+        }
+    }
+    var prefixFound = (split != null);
+    var finalSz = excSz;
+    if (prefixFound) {
+        var xstr3 = [];
+        for (i = 0; i != size; i++)
+            xstr3.push(split[i]);
+        pcubo.push(xstr3);
+        pcubo = pcubo.concat(rubo);
+        finalSz = pcubo.length;
+    }
+    return { pcubo: pcubo, excSz: excSz, prefixFound: prefixFound, finalSz: finalSz };
+}
+
 function selPhone(phrase, maxlevel, defa){
     var ext = !defa;
     if ((phrase.length == 1) && defa)
@@ -820,7 +872,6 @@ function selPhone(phrase, maxlevel, defa){
     var pcontrSz = 0;
     var pcontail = "";
     var pconqueue = "";
-    var xstr = [];
     var pcubo = [];
 
     for (k = 0; k != word.length; k++) {
@@ -838,81 +889,23 @@ function selPhone(phrase, maxlevel, defa){
         pcubo = [];
         if (pconqueue != "") {
             var optta = opttable;
+            var guard = " AND c" + optta + " <> '' AND c" + optta + " IS NOT NULL";
             var cfullchar = pconqueue + fullchar;
             var csize = cfullchar.split(":").length;
-            contents = condb.exec("SELECT c" + optta + ", cword FROM cmpnom WHERE cword = '" + cfullchar + "' AND c" + optta + " <> '' AND c" + optta + " IS NOT NULL");
-            var split = null;
-            var i, j;
-
-            if (contents.length != 0) {
-                for (i = 0; i < contents[0].values.length; i++) {
-                    split = contents[0].values[i][0].split(" ");
-                    xstr = [];
-                    for (j = 0; j != csize; j++)
-                        xstr.push(split[j]);
-                    pcubo.push(xstr);
-                }
-            }
-
-            pconqSz = pconrSz = pconcSz = pcubo.length;
-            contents = condb.exec("SELECT c" + optta + ", cword FROM cmpnom WHERE cword like '" + cfullchar + ":%' AND c" + optta + " <> '' AND c" + optta + " IS NOT NULL");
-            xstr = [];
-            split = null;
-            var rubo = [];
-            if (contents.length != 0) {
-                for (i = 0; i < contents[0].values.length; i++) {
-                    split = contents[0].values[i][0].split(" ");
-                    xstr = [];
-                    for (j = 0; j != split.length; j++)
-                        xstr.push(split[j]);
-                    rubo.push(xstr);
-                }
-            }
-            if (split != null) {
-                xstr = [];
-                for (i = 0; i != csize; i++)
-                    xstr.push(split[i]);
-                pcubo.push(xstr);
-                pcubo = pcubo.concat(rubo);
-                pconqSz++;
-                pconrSz = pcubo.length;
-            }
+            var r = compoundLookup("cword", "c" + optta, cfullchar, csize, ":", " ", guard, pcubo);
+            pcubo = r.pcubo;
+            pconcSz = r.excSz;
+            pconqSz = r.excSz + (r.prefixFound ? 1 : 0);
+            pconrSz = r.prefixFound ? r.finalSz : r.excSz;
 
             if (pcontail != "") {
                 var truby = pcontail + fullchar;
                 var tsize = truby.split(":").length;
-                contents = condb.exec("SELECT c" + optta + ", cword FROM cmpnom WHERE cword = '" + truby + "' AND c" + optta + " <> '' AND c" + optta + " IS NOT NULL");
-                if (contents.length != 0) {
-                    for (i = 0; i < contents[0].values.length; i++) {
-                        split = contents[0].values[i][0].split(" ");
-                        xstr = [];
-                        for (j = 0; j != tsize; j++)
-                            xstr.push(split[j]);
-                        pcubo.push(xstr);
-                    }
-                }
-                contents = condb.exec("SELECT c" + optta + ", cword FROM cmpnom WHERE cword like '" + truby + ":%' AND c" + optta + " <> '' AND c" + optta + " IS NOT NULL");
-                xstr = [];
-                split = null;
-                rubo = [];
-                if (contents.length != 0) {
-                    for (i = 0; i < contents[0].values.length; i++) {
-                        split = contents[0].values[i][0].split(" ");
-                        xstr = [];
-                        for (j = 0; j != split.length; j++)
-                            xstr.push(split[j]);
-                        rubo.push(xstr);
-                    }
-                }
-
-                if (split != null) {
-                    xstr = [];
-                    for (i = 0; i != csize; i++)
-                        xstr.push(split[i]);
-                    pcubo.push(xstr);
-                    pcubo = pcubo.concat(rubo);
+                var r2 = compoundLookup("cword", "c" + optta, truby, tsize, ":", " ", guard, pcubo);
+                pcubo = r2.pcubo;
+                if (r2.prefixFound) {
                     pcontqSz++;
-                    pcontrSz = pcubo.length;
+                    pcontrSz = r2.finalSz;
                 }
             }
         }
@@ -1006,7 +999,6 @@ function selChar(phrase, maxlevel, defa) {
     var pcontrSz = 0;
     var pcontail = "";
     var pconqueue = "";
-    var xstr = [];
     var pcubo = [];
 
     for (k = 0; k != word.length; k++) {
@@ -1021,79 +1013,20 @@ function selChar(phrase, maxlevel, defa) {
             var optta = opttable;
             var cfullchar = pconqueue + fullchar;
             var csize = cfullchar.split(" ").length;
-            contents = condb.exec("SELECT cword, c" + optta + " FROM cmpnom WHERE c" + optta + " = '" + sqlEscape(cfullchar) + "'");
-            var split = null;
-            var i, j;
-
-            if (contents.length != 0) {
-                for (i = 0; i < contents[0].values.length; i++) {
-                    split = contents[0].values[i][0].split(":");
-                    xstr = [];
-                    for (j = 0; j != csize; j++)
-                        xstr.push(split[j]);
-                    pcubo.push(xstr);
-                }
-            }
-
-            pconqSz = pconrSz = pconcSz = pcubo.length;
-            contents = condb.exec("SELECT cword, c" + optta + " FROM cmpnom WHERE c" + optta + " like '" + sqlEscape(cfullchar) + " %'");
-            xstr = [];
-            split = null;
-            var rubo = [];
-            if (contents.length != 0) {
-                for (i = 0; i < contents[0].values.length; i++) {
-                    split = contents[0].values[i][0].split(":");
-                    xstr = [];
-                    for (j = 0; j != split.length; j++)
-                        xstr.push(split[j]);
-                    rubo.push(xstr);
-                }
-            }
-            if (split != null) {
-                xstr = [];
-                for (i = 0; i != csize; i++)
-                    xstr.push(split[i]);
-                pcubo.push(xstr);
-                pcubo = pcubo.concat(rubo);
-                pconqSz++;
-                pconrSz = pcubo.length;
-            }
+            var r = compoundLookup("c" + optta, "cword", sqlEscape(cfullchar), csize, " ", ":", "", pcubo);
+            pcubo = r.pcubo;
+            pconcSz = r.excSz;
+            pconqSz = r.excSz + (r.prefixFound ? 1 : 0);
+            pconrSz = r.prefixFound ? r.finalSz : r.excSz;
 
             if (pcontail != "") {
                 var truby = pcontail + fullchar;
                 var tsize = truby.split(" ").length;
-                contents = condb.exec("SELECT cword, c" + optta + " FROM cmpnom WHERE c" + optta + " = '" + sqlEscape(truby) + "'");
-                if (contents.length != 0) {
-                    for (i = 0; i < contents[0].values.length; i++) {
-                        split = contents[0].values[i][0].split(":");
-                        xstr = [];
-                        for (j = 0; j != tsize; j++)
-                            xstr.push(split[j]);
-                        pcubo.push(xstr);
-                    }
-                }
-                contents = condb.exec("SELECT cword, c" + optta + " FROM cmpnom WHERE c" + optta + " like '" + sqlEscape(truby) + " %'");
-                xstr = [];
-                split = null;
-                rubo = [];
-                if (contents.length != 0) {
-                    for (i = 0; i < contents[0].values.length; i++) {
-                        split = contents[0].values[i][0].split(":");
-                        xstr = [];
-                        for (j = 0; j != split.length; j++)
-                            xstr.push(split[j]);
-                        rubo.push(xstr);
-                    }
-                }
-
-                if (split != null) {
-                    xstr = [];
-                    for (i = 0; i != csize; i++)
-                        xstr.push(split[i]);
-                    pcubo.push(xstr);
-                    pcubo = pcubo.concat(rubo);
+                var r2 = compoundLookup("c" + optta, "cword", sqlEscape(truby), tsize, " ", ":", "", pcubo);
+                pcubo = r2.pcubo;
+                if (r2.prefixFound) {
                     pcontqSz++;
-                    pcontrSz = pcubo.length;
+                    pcontrSz = r2.finalSz;
                 }
             }
         }
@@ -1129,7 +1062,7 @@ function selChar(phrase, maxlevel, defa) {
             pcontail = "";
         } else if (pcontqSz > 0) {
             pconqueue = pcontail + fullchar + " ";
-            pcontail = fullchar + ":";
+            pcontail = fullchar + " ";
         } else if (pcontrSz > 0) {
             pconqueue = pcontail = "";
         } else {
