@@ -1210,7 +1210,7 @@ textarea {
   float: right;
 }
 
-/* Quốc Ngữ → Nôm conversion trigger (was a dropup with a single item; now a plain link) */
+/* Quốc Ngữ ⇄ Nôm conversion triggers: two plain links, one per direction (case 0/1 of convertpad) */
 .convert-item {
   background-color: #121890;
 }
