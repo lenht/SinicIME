@@ -11,7 +11,6 @@ function $css(el, props) {
 }
 
 var shiftbool = false;
-var opttablelist = [document.getElementById('Hannom').value];
 var kblist = ["E→文"];
 var keyboard = 0;
 var contents = [];
@@ -83,22 +82,6 @@ function isNoSpaceLang(qn) {
     // All previously no-space languages (Hangul, Kana, Thai, Lao, Tai Tham,
     // Tai Ahom, Sukhothai) have been removed; no remaining language needs this.
     return false;
-}
-
-function opttableselect(tablesel) {
-    quocngu = tablesel;
-    var vietSinoFontStack = 'Lexend, SimSun, SimSun-ExtB, SimSun-ExtG, Jigmo3, HanaMinA, HanaMinB, "BabelStone Han", Sawndip, "Nom Na Tong", "Han-Nom Gothic Supplement"';
-    $css(document.body, { 'font-family': vietSinoFontStack });
-    $css(document.getElementById("txtPad"), { 'font-family': vietSinoFontStack });
-    $css(document.getElementById("txtPadout"), { 'font-family': vietSinoFontStack });
-    switch (quocngu) {
-        case 0:
-        default: opttable = "rubynom";
-        
-            break;
-    }
-    document.getElementById("opttablename").innerHTML = opttablelist[tablesel];
-    document.getElementById("txtPad").focus();
 }
 
 function optkeyboard(kbsel) {
