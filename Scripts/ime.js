@@ -21,7 +21,6 @@ var conlentail = 0;
 var concSz = 0;
 var conqSz = 0;
 var conrSz = 0;
-var contcSz = 0;
 var contqSz = 0;
 var contrSz = 0;
 var contail = "";
@@ -248,15 +247,8 @@ function txtPadKeyTyped(evt) {
         } else if (ind < conqSz) {
             conqueue = conqueue + rubystr + " ";
             contail = rubystr + " ";
-        } else if (ind < conrSz)
+        } else if (ind < conrSz) {
             conqueue = contail = "";
-        else if (ind < contcSz) {
-            conlenbuf = conlentail;
-            if (contcSz == contqSz)
-                conqueue = "";
-            else
-                conqueue = contail + rubystr + " ";
-            contail = "";
         } else if (ind < contqSz) {
             conlenbuf = conlentail;
             conqueue = contail + rubystr + " ";
@@ -530,7 +522,6 @@ function upPage() {
     concSz += 9;
     conrSz += 9;
     contqSz += 9;
-    contcSz += 9;
     contrSz += 9;
     bPgdn = true;
     if (pgBe == 0) {
@@ -550,7 +541,6 @@ function dnPage() {
     concSz -= 9;
     conrSz -= 9;
     contqSz -= 9;
-    contcSz -= 9;
     contrSz -= 9;
     bPgup = true;
     var optionsublist;
@@ -867,7 +857,6 @@ function selPhone(phrase, maxlevel, defa){
     var pconcSz = 0;
     var pconqSz = 0;
     var pconrSz = 0;
-    var pcontcSz = 0;
     var pcontqSz = 0;
     var pcontrSz = 0;
     var pcontail = "";
@@ -875,7 +864,7 @@ function selPhone(phrase, maxlevel, defa){
     var pcubo = [];
 
     for (k = 0; k != word.length; k++) {
-        pconqSz = pconrSz = pconcSz = pcontqSz = pcontrSz = pcontcSz = 0;
+        pconqSz = pconrSz = pconcSz = pcontqSz = pcontrSz = 0;
         if ((word[k].charCodeAt(0) < 0xD800) || (word[k].charCodeAt(0) >= 0xE000)) {
             fullchar = word[k];
         } else {
@@ -933,12 +922,6 @@ function selPhone(phrase, maxlevel, defa){
             pcontail = fullchar + ":";
         } else if (pconrSz > 0) {
             pconqueue = pcontail = "";
-        } else if (pcontcSz > 0) {
-            if (pcontcSz == pcontqSz)
-                pconqueue = "";
-            else
-                pconqueue = pcontail + fullchar + ":";
-            pcontail = "";
         } else if (pcontqSz > 0) {
             pconqueue = pcontail + fullchar + ":";
             pcontail = fullchar + ":";
@@ -994,7 +977,6 @@ function selChar(phrase, maxlevel, defa) {
     var pconcSz = 0;
     var pconqSz = 0;
     var pconrSz = 0;
-    var pcontcSz = 0;
     var pcontqSz = 0;
     var pcontrSz = 0;
     var pcontail = "";
@@ -1002,7 +984,7 @@ function selChar(phrase, maxlevel, defa) {
     var pcubo = [];
 
     for (k = 0; k != word.length; k++) {
-        pconqSz = pconrSz = pconcSz = pcontqSz = pcontrSz = pcontcSz = 0;
+        pconqSz = pconrSz = pconcSz = pcontqSz = pcontrSz = 0;
 
         fullcharcase = word[k];
 
@@ -1054,12 +1036,6 @@ function selChar(phrase, maxlevel, defa) {
             pcontail = fullchar + " ";
         } else if (pconrSz > 0) {
             pconqueue = pcontail = "";
-        } else if (pcontcSz > 0) {
-            if (pcontcSz == pcontqSz)
-                pconqueue = "";
-            else
-                pconqueue = pcontail + fullchar + " ";
-            pcontail = "";
         } else if (pcontqSz > 0) {
             pconqueue = pcontail + fullchar + " ";
             pcontail = fullchar + " ";
@@ -1139,7 +1115,7 @@ function listUpdate() {
 
 function delList() {
     optionlist = [];
-    conqSz = conrSz = concSz = contqSz = contrSz = contcSz = 0;
+    conqSz = conrSz = concSz = contqSz = contrSz = 0;
     selectedindex = 0;
     pgBe = 0;
     pgEn = 0;
