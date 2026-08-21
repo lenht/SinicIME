@@ -78,10 +78,10 @@ xhr.onerror = function () {
 
 xhr.send();
 
-function isNoSpaceLang(qn) {
-    // All previously no-space languages (Hangul, Kana, Thai, Lao, Tai Tham,
-    // Tai Ahom, Sukhothai) have been removed; no remaining language needs this.
-    return false;
+// Escapes single quotes for inclusion in a SQL string literal (SQLite-style:
+// doubling the quote rather than backslash-escaping it).
+function sqlEscape(str) {
+    return str.replace(/\'/g, "''");
 }
 
 function optkeyboard(kbsel) {
@@ -91,14 +91,23 @@ function optkeyboard(kbsel) {
 }
 
 //keydown
+// Clears the in-progress composition (rubytype buffer, candidate queue, and
+// candidate list). Shared by the CTRL/ESC handler, the arrow-key-with-no-
+// candidates handler, and the touch-input max-length handler.
+function resetComposition() {
+    contail = conqueue = "";
+    conlenbuf = 0;
+    delList();
+    document.getElementById("rubytype").innerHTML = "";
+    lentype = 0;
+}
+
 function txtPadKeyPressed(evt) {
     var evtK = evt.keyCode || evt.charCode;
-    if ((evtK == 17) || (evtK == 27) || ([...document.getElementById("rubytype").textContent].length >= 12)) { //CTRL or ESC
-        contail = conqueue = "";
-        conlenbuf = 0;
-        delList();
-        document.getElementById("rubytype").innerHTML = "";
-        lentype = 0;
+    var txtPadEl = document.getElementById("txtPad");
+    var rubytypeEl = document.getElementById("rubytype");
+    if ((evtK == 17) || (evtK == 27) || ([...rubytypeEl.textContent].length >= 12)) { //CTRL or ESC
+        resetComposition();
         return;
     }
     // SHIFT
@@ -107,14 +116,14 @@ function txtPadKeyPressed(evt) {
             shiftbool = true;
             var ind = selectedindex;
             if (ind > 0) {
-                selExample(document.getElementById("w" + ind).textContent, document.getElementById("rubytype").textContent);
+                selExample(document.getElementById("w" + ind).textContent, rubytypeEl.textContent);
                 return;
             }
-            var selstart = document.getElementById("txtPad").selectionStart;
-            var selend = document.getElementById("txtPad").selectionEnd;
-            var subtxt = document.getElementById('txtPad').value.substring(selstart, selend);
+            var selstart = txtPadEl.selectionStart;
+            var selend = txtPadEl.selectionEnd;
+            var subtxt = txtPadEl.value.substring(selstart, selend);
             if (subtxt.length > 0)
-                document.getElementById("example").innerHTML = "<table><tr><td>" + logo2phon(subtxt, false, 20) + "</td></tr></table>";
+                document.getElementById("example").innerHTML = "<table><tr><td>" + logo2phon(subtxt, 20) + "</td></tr></table>";
         }
     }
 
@@ -126,12 +135,12 @@ function txtPadKeyPressed(evt) {
                     upPage();
                     setSelectedIndex(9);
                     if (carpos == -1)
-                        carpos = document.getElementById('txtPad').selectionEnd;
+                        carpos = txtPadEl.selectionEnd;
                     return;
                 }
                 setSelectedIndex(ind - 1);
                 if (carpos == -1)
-                    carpos = document.getElementById('txtPad').selectionEnd;
+                    carpos = txtPadEl.selectionEnd;
                 return;
             } else
                 console.log("alert!!");
@@ -143,12 +152,12 @@ function txtPadKeyPressed(evt) {
                     dnPage();
                     setSelectedIndex(1);
                     if (carpos == -1)
-                        carpos = document.getElementById('txtPad').selectionEnd;
+                        carpos = txtPadEl.selectionEnd;
                     return;
                 }
                 setSelectedIndex(ind + 1);
                 if (carpos == -1)
-                    carpos = document.getElementById('txtPad').selectionEnd;
+                    carpos = txtPadEl.selectionEnd;
                 return;
             } else
                 console.log("alert!!");
@@ -163,23 +172,19 @@ function txtPadKeyPressed(evt) {
         }
     } else {
         if ((evtK >= 37) && (evtK <= 40)) {
-            contail = conqueue = "";
-            conlenbuf = 0;
-            delList();
-            document.getElementById("rubytype").innerHTML = "";
-            lentype = 0;
+            resetComposition();
             return;
         }
     }
 
-    var rubystr = document.getElementById("rubytype").textContent;
+    var rubystr = rubytypeEl.textContent;
     var utf = 1;
     var rt = rubystr.charCodeAt(rubystr.length - 1);
     if ((rt >= 0xD800) && (rt <= 0xDFFF))
         utf = 2;
     if (evtK == 8) {    //BKSPC
         if (rubystr.length > 0) {
-            document.getElementById("rubytype").innerHTML = rubystr.substring(0, rubystr.length - utf);
+            rubytypeEl.innerHTML = rubystr.substring(0, rubystr.length - utf);
             lentype--;
         } else
             lentype = 0;
@@ -192,9 +197,11 @@ function txtPadKeyPressed(evt) {
 function txtPadKeyTyped(evt) {
     var evtK = evt.keyCode || evt.charCode;
     var evtC = String.fromCharCode(evtK);
-    var rubystr = document.getElementById("rubytype").textContent;
+    var txtPadEl = document.getElementById("txtPad");
+    var rubytypeEl = document.getElementById("rubytype");
+    var rubystr = rubytypeEl.textContent;
     if (evtK == 13) {   //ENTER
-        document.getElementById("rubytype").innerHTML = "";
+        rubytypeEl.innerHTML = "";
         listUpdate();
         lentype = 0;
         return;
@@ -216,11 +223,11 @@ function txtPadKeyTyped(evt) {
                 conlenbuf = 0;
             putWord(document.getElementById("w" + selnum).textContent);
         } else {
-            var txtarea = document.getElementById("txtPad").value;
-            var caretend = document.getElementById("txtPad").selectionEnd;
-            document.getElementById("txtPad").value = txtarea.substring(0, caretend) + evtC + txtarea.substring(caretend, txtarea.length);
-            document.getElementById("txtPad").selectionStart = document.getElementById("txtPad").selectionEnd = caretend + evtC.length;
-            document.getElementById("rubytype").innerHTML = "";
+            var txtarea = txtPadEl.value;
+            var caretend = txtPadEl.selectionEnd;
+            txtPadEl.value = txtarea.substring(0, caretend) + evtC + txtarea.substring(caretend, txtarea.length);
+            txtPadEl.selectionStart = txtPadEl.selectionEnd = caretend + evtC.length;
+            rubytypeEl.innerHTML = "";
             lentype = 0;
             delList();
         }
@@ -229,12 +236,8 @@ function txtPadKeyTyped(evt) {
         return;
     } else if (evtK == 32) {    //SPACE
         if (optionlist.length == 1) {
-            if (isNoSpaceLang(quocngu)) {
-                listUpdate();
-            } else {
-                document.getElementById("rubytype").innerHTML = rubystr + " ";
-                listUpdate();
-            }
+            rubytypeEl.innerHTML = rubystr + " ";
+            listUpdate();
         }
         if (ind < concSz) {
             if (concSz == conqSz)
@@ -271,7 +274,7 @@ function txtPadKeyTyped(evt) {
             conlentmp = document.getElementById("w" + selectedindex).textContent.length;
             putWord(document.getElementById("w" + selectedindex).textContent);
         }
-        document.getElementById("txtPad").focus();
+        txtPadEl.focus();
         return;
     } else if (((evtK > 31) && (evtK < 39)) || ((evtK > 39) && (evtK < 48)) || ((evtK > 57) && (evtK < 65)) || ((evtK > 90) && (evtK < 96)) || ((evtK > 122) && (evtK < 127))) {    //Punctuation
         if ((ind >= conrSz) && (ind < contrSz))
@@ -285,10 +288,10 @@ function txtPadKeyTyped(evt) {
         conlenbuf = 0;
         lentype = 0;
         lentype++;
-        document.getElementById("rubytype").innerHTML = typeChar(document.getElementById("rubytype").textContent, evtC);
+        rubytypeEl.innerHTML = typeChar(rubytypeEl.textContent, evtC);
     } else if (evtK != 8) {
         lentype++;
-        document.getElementById("rubytype").innerHTML = typeChar(document.getElementById("rubytype").textContent, evtC);
+        rubytypeEl.innerHTML = typeChar(rubytypeEl.textContent, evtC);
     }
     listUpdate();
     
@@ -340,22 +343,11 @@ function txtPadKeyInput(evt) {
 
     var curcaret = txtPadEl.selectionEnd;
 
-    var newtxtPadlength =
-        document.getElementById("txtPad").value.length;
+    var newtxtPadlength = txtPadEl.value.length;
 
     // Max composition length
     if ([...rubystr].length >= 12) {
-
-        contail = "";
-        conqueue = "";
-        conlenbuf = 0;
-
-        delList();
-
-        rubytypeEl.innerHTML = "";
-
-        lentype = 0;
-
+        resetComposition();
         return;
     }
 
@@ -370,8 +362,7 @@ function txtPadKeyInput(evt) {
 
             lentype = 0;
 
-            curtxtPadlength =
-                document.getElementById("txtPad").value.length;
+            curtxtPadlength = txtPadEl.value.length;
 
             return;
         }
@@ -390,8 +381,7 @@ function txtPadKeyInput(evt) {
 
         listUpdate();
 
-        curtxtPadlength =
-            document.getElementById("txtPad").value.length;
+        curtxtPadlength = txtPadEl.value.length;
 
         return;
     }
@@ -399,9 +389,7 @@ function txtPadKeyInput(evt) {
     // CHARACTER INPUT
     if (newtxtPadlength > curtxtPadlength) {
 
-        var evtC =
-            document.getElementById("txtPad")
-            .value.substring(curcaret - 1, curcaret);
+        var evtC = txtPadEl.value.substring(curcaret - 1, curcaret);
 
         // ENTER
         if (evtK == 13) {
@@ -412,8 +400,7 @@ function txtPadKeyInput(evt) {
 
             lentype = 0;
 
-            curtxtPadlength =
-                document.getElementById("txtPad").value.length;
+            curtxtPadlength = txtPadEl.value.length;
 
             return;
         }
@@ -448,8 +435,7 @@ function txtPadKeyInput(evt) {
                 );
             }
 
-            curtxtPadlength =
-                document.getElementById("txtPad").value.length;
+            curtxtPadlength = txtPadEl.value.length;
 
             txtPadEl.focus();
 
@@ -517,21 +503,21 @@ function txtPadKeyInput(evt) {
 
         listUpdate();
 
-        curtxtPadlength =
-            document.getElementById("txtPad").value.length;
+        curtxtPadlength = txtPadEl.value.length;
 
         return;
     }
 }
 
 function putWord(instr) {
-    var txtarea = document.getElementById("txtPad").value;
-    document.getElementById("txtPad").selectionStart = document.getElementById("txtPad").selectionEnd - lentype - conlenbuf;
-    var caretbeg = document.getElementById("txtPad").selectionStart;
-    var caretend = document.getElementById("txtPad").selectionEnd;
-    document.getElementById("txtPad").value = txtarea.substring(0, caretbeg) + instr + txtarea.substring(caretend, txtarea.length);
+    var txtPadEl = document.getElementById("txtPad");
+    var txtarea = txtPadEl.value;
+    txtPadEl.selectionStart = txtPadEl.selectionEnd - lentype - conlenbuf;
+    var caretbeg = txtPadEl.selectionStart;
+    var caretend = txtPadEl.selectionEnd;
+    txtPadEl.value = txtarea.substring(0, caretbeg) + instr + txtarea.substring(caretend, txtarea.length);
     conlenbuf = 0;
-    document.getElementById("txtPad").selectionStart = document.getElementById("txtPad").selectionEnd = caretbeg + instr.length;
+    txtPadEl.selectionStart = txtPadEl.selectionEnd = caretbeg + instr.length;
     document.getElementById("rubytype").innerHTML = "";
     lentype = 0;
     delList();
@@ -618,7 +604,7 @@ function addSelRuby(ruby) {
         return;
     }
 
-    contents = condb.exec("SELECT word FROM " + opttable + " WHERE " + optruby + " = '" + ruby.replace(/\'/g, "''").toLowerCase() + "' " + optlev + " order by level desc");
+    contents = condb.exec("SELECT word FROM " + opttable + " WHERE " + optruby + " = '" + sqlEscape(ruby).toLowerCase() + "' " + optlev + " order by level desc");
     if (contents.length != 0) {
         var i = 0;
         for (i = 0; i < contents[0].values.length; i++) {
@@ -627,7 +613,7 @@ function addSelRuby(ruby) {
     }
 
     if (sugCB) {
-        contents = condb.exec("select word, ruby from " + opttable + " where " + optruby + " like '" + ruby.replace(/\'/g, "''").toLowerCase() + "%' and " + optruby + "!='" + ruby + "' " + optlev + "");
+        contents = condb.exec("select word, ruby from " + opttable + " where " + optruby + " like '" + sqlEscape(ruby).toLowerCase() + "%' and " + optruby + "!='" + ruby + "' " + optlev + "");
         if (contents.length != 0) {
             if (cubo.length > 0)
                 cubo.push(ruby);
@@ -648,7 +634,7 @@ function addSelCompound(ruby) {
     var optta = opttable;
     var cruby = conqueue + ruby;
     var csize = cruby.split(" ").length;
-    contents = condb.exec("SELECT cword, c" + optta + " FROM cmpnom WHERE c" + optta + " = '" + cruby.replace(/\'/g, "''") + "'");
+    contents = condb.exec("SELECT cword, c" + optta + " FROM cmpnom WHERE c" + optta + " = '" + sqlEscape(cruby) + "'");
     var split = null;
     var cubo = [];
     var i, j;
@@ -665,7 +651,7 @@ function addSelCompound(ruby) {
     }
     
     conqSz = conrSz = concSz = cubo.length;
-    contents = condb.exec("SELECT cword, c" + optta + " FROM cmpnom WHERE c" + optta + " like '" + cruby.replace(/\'/g, "''") + " %'");
+    contents = condb.exec("SELECT cword, c" + optta + " FROM cmpnom WHERE c" + optta + " like '" + sqlEscape(cruby) + " %'");
     xstr = "";
     split = null;
     var rubo = [];
@@ -693,7 +679,7 @@ function addSelCompound(ruby) {
     if (contail != "") {
         var truby = contail + ruby;
         var tsize = truby.split(" ").length;
-        contents = condb.exec("SELECT cword, c" + optta + " FROM cmpnom WHERE c" + optta + " = '" + truby.replace(/\'/g, "''") + "'");
+        contents = condb.exec("SELECT cword, c" + optta + " FROM cmpnom WHERE c" + optta + " = '" + sqlEscape(truby) + "'");
         if (contents.length != 0) {
             for (i = 0; i < contents[0].values.length; i++) {
                 split = contents[0].values[i][0].split(":");
@@ -704,7 +690,7 @@ function addSelCompound(ruby) {
                 conlenbuf = conlentmp;
             }
         }
-        contents = condb.exec("SELECT cword, c" + optta + " FROM cmpnom WHERE c" + optta + " like '" + truby.replace(/\'/g, "''") + " %'");
+        contents = condb.exec("SELECT cword, c" + optta + " FROM cmpnom WHERE c" + optta + " like '" + sqlEscape(truby) + " %'");
         xstr = "";
         split = null;
         rubo = [];
@@ -735,20 +721,22 @@ function addSelCompound(ruby) {
 
 function convertpad(direction, maxlevel) {
     var convtxt = "";
+    var txtPadEl = document.getElementById("txtPad");
     switch (direction) {
         case 0:
-            convtxt = logo2phon(document.getElementById("txtPad").value, true, maxlevel);
+            convtxt = logo2phon(txtPadEl.value, maxlevel);
             break;
         case 1:
-            convtxt = phon2logo(document.getElementById("txtPad").value, maxlevel);
+            convtxt = phon2logo(txtPadEl.value, maxlevel);
             break;
         default: break;
     }
     if (convtxt.length > 0) {
-        $css(document.getElementById("txtPad"), { 'width': '50%' });
-        $css(document.getElementById("txtPadout"), { 'writing-mode': 'horizontal-tb' });
-        $css(document.getElementById("txtPadout"), { 'display': 'block' });
-        document.getElementById("txtPadout").innerHTML = convtxt.replace(/\n/g, " <br> ");
+        var txtPadoutEl = document.getElementById("txtPadout");
+        $css(txtPadEl, { 'width': '50%' });
+        $css(txtPadoutEl, { 'writing-mode': 'horizontal-tb' });
+        $css(txtPadoutEl, { 'display': 'block' });
+        txtPadoutEl.innerHTML = convtxt.replace(/\n/g, " <br> ");
 		$css(document.getElementById("copy_button"), { 'display': 'block' });
     } else {
         offpad();
@@ -768,7 +756,7 @@ function offpad() {
 		$css(document.getElementById("copy_button"), { 'display': 'none' });
         $css(document.getElementById("txtPad"), { 'width': '100%' });
 }
-function logo2phon(pad, nospace, maxlevel) {
+function logo2phon(pad, maxlevel) {
     if (pad == "")
         return "";
     var cubo = selPhone(pad, maxlevel, true);
@@ -789,11 +777,7 @@ function logo2phon(pad, nospace, maxlevel) {
                 nextword = nextword.replace(/？/g, "?");
                 nextword = nextword.replace(/！/g, "!");
                 nextword = nextword.replace(/，/g, ",");
-                if ((nospace) && (isNoSpaceLang(quocngu)))
-                    nextword += " ";
             }
-            ttt = ttt + nextword;
-        } else if ((nospace) && (isNoSpaceLang(quocngu))) {
             ttt = ttt + nextword;
         }
         else if (ttt.slice(-1) == "\n")
@@ -828,9 +812,6 @@ function selPhone(phrase, maxlevel, defa){
     var sql = "";
     var fullchar;
 
-    var pconlenbuf = 0;
-    var pconlentmp = 0;
-    var pconlentail = 0;
     var pconcSz = 0;
     var pconqSz = 0;
     var pconrSz = 0;
@@ -870,7 +851,6 @@ function selPhone(phrase, maxlevel, defa){
                     for (j = 0; j != csize; j++)
                         xstr.push(split[j]);
                     pcubo.push(xstr);
-                    pconlenbuf = pconlentmp;
                 }
             }
 
@@ -886,14 +866,12 @@ function selPhone(phrase, maxlevel, defa){
                     for (j = 0; j != split.length; j++)
                         xstr.push(split[j]);
                     rubo.push(xstr);
-                    pconlenbuf = pconlentmp;
                 }
             }
             if (split != null) {
                 xstr = [];
                 for (i = 0; i != csize; i++)
                     xstr.push(split[i]);
-                pconlentail = split[i - 1].length;
                 pcubo.push(xstr);
                 pcubo = pcubo.concat(rubo);
                 pconqSz++;
@@ -911,7 +889,6 @@ function selPhone(phrase, maxlevel, defa){
                         for (j = 0; j != tsize; j++)
                             xstr.push(split[j]);
                         pcubo.push(xstr);
-                        pconlenbuf = pconlentmp;
                     }
                 }
                 contents = condb.exec("SELECT c" + optta + ", cword FROM cmpnom WHERE cword like '" + truby + ":%' AND c" + optta + " <> '' AND c" + optta + " IS NOT NULL");
@@ -925,7 +902,6 @@ function selPhone(phrase, maxlevel, defa){
                         for (j = 0; j != split.length; j++)
                             xstr.push(split[j]);
                         rubo.push(xstr);
-                        pconlenbuf = pconlentmp;
                     }
                 }
 
@@ -933,7 +909,6 @@ function selPhone(phrase, maxlevel, defa){
                     xstr = [];
                     for (i = 0; i != csize; i++)
                         xstr.push(split[i]);
-                    pconlentail = split[i - 1].length;
                     pcubo.push(xstr);
                     pcubo = pcubo.concat(rubo);
                     pcontqSz++;
@@ -966,23 +941,19 @@ function selPhone(phrase, maxlevel, defa){
         } else if (pconrSz > 0) {
             pconqueue = pcontail = "";
         } else if (pcontcSz > 0) {
-            pconlenbuf = pconlentail;
             if (pcontcSz == pcontqSz)
                 pconqueue = "";
             else
                 pconqueue = pcontail + fullchar + ":";
             pcontail = "";
         } else if (pcontqSz > 0) {
-            pconlenbuf = pconlentail;
             pconqueue = pcontail + fullchar + ":";
             pcontail = fullchar + ":";
         } else if (pcontrSz > 0) {
-            pconlenbuf = pconlentail;
             pconqueue = pcontail = "";
         } else {
             pconqueue = fullchar + ":";
             pcontail = "";
-            pconlenbuf = 0;
             pcubo = [];
         }
 
@@ -1027,9 +998,6 @@ function selChar(phrase, maxlevel, defa) {
     var fullcharcase;
     var fullchar;
 
-    var pconlenbuf = 0;
-    var pconlentmp = 0;
-    var pconlentail = 0;
     var pconcSz = 0;
     var pconqSz = 0;
     var pconrSz = 0;
@@ -1053,7 +1021,7 @@ function selChar(phrase, maxlevel, defa) {
             var optta = opttable;
             var cfullchar = pconqueue + fullchar;
             var csize = cfullchar.split(" ").length;
-            contents = condb.exec("SELECT cword, c" + optta + " FROM cmpnom WHERE c" + optta + " = '" + cfullchar.replace(/\'/g, "''") + "'");
+            contents = condb.exec("SELECT cword, c" + optta + " FROM cmpnom WHERE c" + optta + " = '" + sqlEscape(cfullchar) + "'");
             var split = null;
             var i, j;
 
@@ -1064,12 +1032,11 @@ function selChar(phrase, maxlevel, defa) {
                     for (j = 0; j != csize; j++)
                         xstr.push(split[j]);
                     pcubo.push(xstr);
-                    pconlenbuf = pconlentmp;
                 }
             }
 
             pconqSz = pconrSz = pconcSz = pcubo.length;
-            contents = condb.exec("SELECT cword, c" + optta + " FROM cmpnom WHERE c" + optta + " like '" + cfullchar.replace(/\'/g, "''") + " %'");
+            contents = condb.exec("SELECT cword, c" + optta + " FROM cmpnom WHERE c" + optta + " like '" + sqlEscape(cfullchar) + " %'");
             xstr = [];
             split = null;
             var rubo = [];
@@ -1080,14 +1047,12 @@ function selChar(phrase, maxlevel, defa) {
                     for (j = 0; j != split.length; j++)
                         xstr.push(split[j]);
                     rubo.push(xstr);
-                    pconlenbuf = pconlentmp;
                 }
             }
             if (split != null) {
                 xstr = [];
                 for (i = 0; i != csize; i++)
                     xstr.push(split[i]);
-                pconlentail = split[i - 1].length;
                 pcubo.push(xstr);
                 pcubo = pcubo.concat(rubo);
                 pconqSz++;
@@ -1097,7 +1062,7 @@ function selChar(phrase, maxlevel, defa) {
             if (pcontail != "") {
                 var truby = pcontail + fullchar;
                 var tsize = truby.split(" ").length;
-                contents = condb.exec("SELECT cword, c" + optta + " FROM cmpnom WHERE c" + optta + " = '" + truby.replace(/\'/g, "''") + "'");
+                contents = condb.exec("SELECT cword, c" + optta + " FROM cmpnom WHERE c" + optta + " = '" + sqlEscape(truby) + "'");
                 if (contents.length != 0) {
                     for (i = 0; i < contents[0].values.length; i++) {
                         split = contents[0].values[i][0].split(":");
@@ -1105,10 +1070,9 @@ function selChar(phrase, maxlevel, defa) {
                         for (j = 0; j != tsize; j++)
                             xstr.push(split[j]);
                         pcubo.push(xstr);
-                        pconlenbuf = pconlentmp;
                     }
                 }
-                contents = condb.exec("SELECT cword, c" + optta + " FROM cmpnom WHERE c" + optta + " like '" + truby.replace(/\'/g, "''") + " %'");
+                contents = condb.exec("SELECT cword, c" + optta + " FROM cmpnom WHERE c" + optta + " like '" + sqlEscape(truby) + " %'");
                 xstr = [];
                 split = null;
                 rubo = [];
@@ -1119,7 +1083,6 @@ function selChar(phrase, maxlevel, defa) {
                         for (j = 0; j != split.length; j++)
                             xstr.push(split[j]);
                         rubo.push(xstr);
-                        pconlenbuf = pconlentmp;
                     }
                 }
 
@@ -1127,7 +1090,6 @@ function selChar(phrase, maxlevel, defa) {
                     xstr = [];
                     for (i = 0; i != csize; i++)
                         xstr.push(split[i]);
-                    pconlentail = split[i - 1].length;
                     pcubo.push(xstr);
                     pcubo = pcubo.concat(rubo);
                     pcontqSz++;
@@ -1137,7 +1099,7 @@ function selChar(phrase, maxlevel, defa) {
         }
         var q;
 
-        sql = "select word,(level % " + maxlevel + ") from " + opttable + " where " + optruby + "='" + fullchar.replace(/\'/g, "''") + "' order by (level % " + maxlevel + ") desc";
+        sql = "select word,(level % " + maxlevel + ") from " + opttable + " where " + optruby + "='" + sqlEscape(fullchar) + "' order by (level % " + maxlevel + ") desc";
         contents = condb.exec(sql);
         if (contents.length != 0) {
             sss = contents[0].values[0][0];
@@ -1160,23 +1122,19 @@ function selChar(phrase, maxlevel, defa) {
         } else if (pconrSz > 0) {
             pconqueue = pcontail = "";
         } else if (pcontcSz > 0) {
-            pconlenbuf = pconlentail;
             if (pcontcSz == pcontqSz)
                 pconqueue = "";
             else
                 pconqueue = pcontail + fullchar + " ";
             pcontail = "";
         } else if (pcontqSz > 0) {
-            pconlenbuf = pconlentail;
             pconqueue = pcontail + fullchar + " ";
             pcontail = fullchar + ":";
         } else if (pcontrSz > 0) {
-            pconlenbuf = pconlentail;
             pconqueue = pcontail = "";
         } else {
             pconqueue = fullchar + " ";
             pcontail = "";
-            pconlenbuf = 0;
             pcubo = [];
         }
 
@@ -1208,16 +1166,11 @@ function selExample(word, ruby) {
         document.getElementById("example").innerHTML = cubostr;
         return;
     }
-    contents = condb.exec("SELECT cword, c" + opttable + " FROM cmpnom WHERE c" + opttable + " LIKE '" + ruby.replace(/\'/g, "''") + " %' OR c" + opttable + " LIKE '% " + ruby.replace(/\'/g, "''") + "' OR c" + opttable + " LIKE '% " + ruby.replace(/\'/g, "''") + " %'");
+    contents = condb.exec("SELECT cword, c" + opttable + " FROM cmpnom WHERE c" + opttable + " LIKE '" + sqlEscape(ruby) + " %' OR c" + opttable + " LIKE '% " + sqlEscape(ruby) + "' OR c" + opttable + " LIKE '% " + sqlEscape(ruby) + " %'");
     if (contents.length != 0) {
         for (i = 0; i < contents[0].values.length; i++) {
             if (contents[0].values[i][0].indexOf(word) > -1) {
-                if (isNoSpaceLang(quocngu)) {
-                    cubostr += "<tr><td>" + contents[0].values[i][0].replace(/:/g, "") + "</td><td>" + contents[0].values[i][1].replace(/ /g, "") + "</td></tr>";
-                }
-                else {
-                    cubostr += "<tr><td>" + contents[0].values[i][0].replace(/:/g, "") + "</td><td>" + contents[0].values[i][1] + "</td></tr>";
-                }
+                cubostr += "<tr><td>" + contents[0].values[i][0].replace(/:/g, "") + "</td><td>" + contents[0].values[i][1] + "</td></tr>";
             }
         }
     }
@@ -1262,8 +1215,13 @@ function delList() {
     whitelist();
 }
 
-function whitelist() {
+// Resets every candidate option (.outopt) to its unselected appearance.
+function clearHighlight() {
     document.querySelectorAll(".outopt").forEach(function(el) { $css(el, { 'background': 'none', 'color': '#f0e0c0' }); });
+}
+
+function whitelist() {
+    clearHighlight();
     for (var i = 1; i <= 9; i++) {
         document.getElementById("w" + i).innerHTML = "";
     }
@@ -1272,7 +1230,7 @@ function whitelist() {
 function setSelectedIndex(ind) {
     if (document.getElementById("w" + ind).textContent != "") {
         selectedindex = ind;
-        document.querySelectorAll(".outopt").forEach(function(el) { $css(el, { 'background': 'none', 'color': '#f0e0c0' }); });
+        clearHighlight();
         $css(document.getElementById("w" + ind), { 'background': '#eee', 'color': '#000' });
     }
     document.getElementById("txtPad").focus();
