@@ -21,6 +21,7 @@ var conlentail = 0;
 var concSz = 0;
 var conqSz = 0;
 var conrSz = 0;
+var contcSz = 0;
 var contqSz = 0;
 var contrSz = 0;
 var contail = "";
@@ -47,15 +48,6 @@ var oo = false;
 var xhr = new XMLHttpRequest();
 xhr.open('GET', './Resources/imenom.jpg', true);
 xhr.responseType = 'arraybuffer';
-// xhr.onload = function (e) {
-//     var uInt8Array = new Uint8Array(this.response);
-//     condb = new SQL.Database(uInt8Array);
-//     // contents = condb.exec("SELECT word FROM rubynom where ruby='là' ");
-//     // contents is now [{columns:['col1','col2',...], values:[[first row], [second row], ...]}]
-//     // console.log(contents[0].values[0]);
-//     $css(document.getElementById("waitscreen"), { display: 'none' });
-//     document.getElementById("txtPad").focus();
-// };
 
 xhr.onload = function () {
     try {
@@ -141,8 +133,7 @@ function txtPadKeyPressed(evt) {
                 if (carpos == -1)
                     carpos = txtPadEl.selectionEnd;
                 return;
-            } else
-                console.log("alert!!");
+            }
         }
         if (evtK == 40) {   //DOWN
             var ind = selectedindex;
@@ -158,8 +149,7 @@ function txtPadKeyPressed(evt) {
                 if (carpos == -1)
                     carpos = txtPadEl.selectionEnd;
                 return;
-            } else
-                console.log("alert!!");
+            }
         }
         if (evtK == 39) { //RIGHT
             rightopt();
@@ -247,8 +237,15 @@ function txtPadKeyTyped(evt) {
         } else if (ind < conqSz) {
             conqueue = conqueue + rubystr + " ";
             contail = rubystr + " ";
-        } else if (ind < conrSz) {
+        } else if (ind < conrSz)
             conqueue = contail = "";
+        else if (ind < contcSz) {
+            conlenbuf = conlentail;
+            if (contcSz == contqSz)
+                conqueue = "";
+            else
+                conqueue = contail + rubystr + " ";
+            contail = "";
         } else if (ind < contqSz) {
             conlenbuf = conlentail;
             conqueue = contail + rubystr + " ";
@@ -332,9 +329,7 @@ function txtPadKeyInput(evt) {
     var txtPadEl = document.getElementById("txtPad");
     var rubytypeEl = document.getElementById("rubytype");
     var rubystr = rubytypeEl.textContent;
-
     var curcaret = txtPadEl.selectionEnd;
-
     var newtxtPadlength = txtPadEl.value.length;
 
     // Max composition length
@@ -345,55 +340,34 @@ function txtPadKeyInput(evt) {
 
     // BACKSPACE
     if (newtxtPadlength < curtxtPadlength) {
-
         if (curtxtPadlength - newtxtPadlength > 1) {
-
             rubytypeEl.innerHTML = "";
-
             listUpdate();
-
             lentype = 0;
-
             curtxtPadlength = txtPadEl.value.length;
-
             return;
         }
-
         if (rubystr.length > 0) {
-
-            rubytypeEl.innerHTML =
-                rubystr.substring(0, rubystr.length - 1);
-
+            rubytypeEl.innerHTML = rubystr.substring(0, rubystr.length - 1);
             lentype--;
-
         } else {
-
             lentype = 0;
         }
-
         listUpdate();
-
         curtxtPadlength = txtPadEl.value.length;
-
         return;
     }
 
     // CHARACTER INPUT
     if (newtxtPadlength > curtxtPadlength) {
-
         var evtC = txtPadEl.value.substring(curcaret - 1, curcaret);
 
         // ENTER
         if (evtK == 13) {
-
             rubytypeEl.innerHTML = "";
-
             listUpdate();
-
             lentype = 0;
-
             curtxtPadlength = txtPadEl.value.length;
-
             return;
         }
 
@@ -401,102 +375,47 @@ function txtPadKeyInput(evt) {
 
         // SPACE
         if (evtC == ' ') {
-
-            txtPadEl.value =
-                txtPadEl.value.substring(0, curcaret - 1) +
-                txtPadEl.value.substring(
-                    curcaret,
-                    txtPadEl.value.length
-                );
-
-            txtPadEl.selectionStart =
-            txtPadEl.selectionEnd =
-                curcaret - 1;
-
+            txtPadEl.value = txtPadEl.value.substring(0, curcaret - 1) + txtPadEl.value.substring(curcaret, txtPadEl.value.length);
+            txtPadEl.selectionStart = txtPadEl.selectionEnd = curcaret - 1;
             if (optionlist.length != 0) {
-
                 evt.preventDefault();
-
                 var wordEl = document.getElementById("w" + selectedindex);
-
-                conlentmp =
-                    wordEl.textContent.length;
-
-                putWord(
-                    wordEl.textContent
-                );
+                conlentmp = wordEl.textContent.length;
+                putWord(wordEl.textContent);
             }
-
             curtxtPadlength = txtPadEl.value.length;
-
             txtPadEl.focus();
-
             return;
         }
 
         // Punctuation
-        else if (
-            (evtC == '.') ||
-            (evtC == ',')
-        ) {
-
-            txtPadEl.value =
-                txtPadEl.value.substring(0, curcaret - 1) +
-                evtC +
-                txtPadEl.value.substring(
-                    curcaret,
-                    txtPadEl.value.length
-                );
-
-            txtPadEl.selectionStart =
-            txtPadEl.selectionEnd =
-                curcaret - 1;
-
-            if (
-                (ind >= conrSz) &&
-                (ind < contrSz)
-            )
+        else if ((evtC == '.') || (evtC == ',')) {
+            txtPadEl.value = txtPadEl.value.substring(0, curcaret - 1) + evtC + txtPadEl.value.substring(curcaret, txtPadEl.value.length);
+            txtPadEl.selectionStart = txtPadEl.selectionEnd = curcaret - 1;
+            if ((ind >= conrSz) && (ind < contrSz))
                 conlenbuf = conlentail;
-
             if (ind >= contrSz)
                 conlenbuf = 0;
-
             if (optionlist.length != 0) {
-
-                putWord(
-                    document.getElementById("w" + selectedindex).textContent
-                );
+                putWord(document.getElementById("w" + selectedindex).textContent);
             }
-
             conqueue = "";
             contail = "";
             conlenbuf = 0;
-
             lentype = 0;
-
-            txtPadEl.selectionStart =
-            txtPadEl.selectionEnd =
-                txtPadEl.selectionEnd + 1;
-
+            txtPadEl.selectionStart = txtPadEl.selectionEnd = txtPadEl.selectionEnd + 1;
             lentype++;
-
-            rubytypeEl.innerHTML =
-                typeChar(rubytypeEl.textContent, evtC);
+            rubytypeEl.innerHTML = typeChar(rubytypeEl.textContent, evtC);
         }
 
         // Normal character
         else if (evtK != 8) {
-
             lentype++;
-
-            rubytypeEl.innerHTML =
-                typeChar(rubytypeEl.textContent, evtC);
+            rubytypeEl.innerHTML = typeChar(rubytypeEl.textContent, evtC);
         }
 
         listUpdate();
-
         curtxtPadlength = txtPadEl.value.length;
-
         return;
     }
 }
@@ -522,6 +441,7 @@ function upPage() {
     concSz += 9;
     conrSz += 9;
     contqSz += 9;
+    contcSz += 9;
     contrSz += 9;
     bPgdn = true;
     if (pgBe == 0) {
@@ -541,6 +461,7 @@ function dnPage() {
     concSz -= 9;
     conrSz -= 9;
     contqSz -= 9;
+    contcSz -= 9;
     contrSz -= 9;
     bPgup = true;
     var optionsublist;
@@ -857,6 +778,7 @@ function selPhone(phrase, maxlevel, defa){
     var pconcSz = 0;
     var pconqSz = 0;
     var pconrSz = 0;
+    var pcontcSz = 0;
     var pcontqSz = 0;
     var pcontrSz = 0;
     var pcontail = "";
@@ -864,7 +786,7 @@ function selPhone(phrase, maxlevel, defa){
     var pcubo = [];
 
     for (k = 0; k != word.length; k++) {
-        pconqSz = pconrSz = pconcSz = pcontqSz = pcontrSz = 0;
+        pconqSz = pconrSz = pconcSz = pcontqSz = pcontrSz = pcontcSz = 0;
         if ((word[k].charCodeAt(0) < 0xD800) || (word[k].charCodeAt(0) >= 0xE000)) {
             fullchar = word[k];
         } else {
@@ -922,6 +844,12 @@ function selPhone(phrase, maxlevel, defa){
             pcontail = fullchar + ":";
         } else if (pconrSz > 0) {
             pconqueue = pcontail = "";
+        } else if (pcontcSz > 0) {
+            if (pcontcSz == pcontqSz)
+                pconqueue = "";
+            else
+                pconqueue = pcontail + fullchar + ":";
+            pcontail = "";
         } else if (pcontqSz > 0) {
             pconqueue = pcontail + fullchar + ":";
             pcontail = fullchar + ":";
@@ -977,6 +905,7 @@ function selChar(phrase, maxlevel, defa) {
     var pconcSz = 0;
     var pconqSz = 0;
     var pconrSz = 0;
+    var pcontcSz = 0;
     var pcontqSz = 0;
     var pcontrSz = 0;
     var pcontail = "";
@@ -984,7 +913,7 @@ function selChar(phrase, maxlevel, defa) {
     var pcubo = [];
 
     for (k = 0; k != word.length; k++) {
-        pconqSz = pconrSz = pconcSz = pcontqSz = pcontrSz = 0;
+        pconqSz = pconrSz = pconcSz = pcontqSz = pcontrSz = pcontcSz = 0;
 
         fullcharcase = word[k];
 
@@ -1036,6 +965,12 @@ function selChar(phrase, maxlevel, defa) {
             pcontail = fullchar + " ";
         } else if (pconrSz > 0) {
             pconqueue = pcontail = "";
+        } else if (pcontcSz > 0) {
+            if (pcontcSz == pcontqSz)
+                pconqueue = "";
+            else
+                pconqueue = pcontail + fullchar + " ";
+            pcontail = "";
         } else if (pcontqSz > 0) {
             pconqueue = pcontail + fullchar + " ";
             pcontail = fullchar + " ";
@@ -1115,7 +1050,7 @@ function listUpdate() {
 
 function delList() {
     optionlist = [];
-    conqSz = conrSz = concSz = contqSz = contrSz = 0;
+    conqSz = conrSz = concSz = contqSz = contrSz = contcSz = 0;
     selectedindex = 0;
     pgBe = 0;
     pgEn = 0;
@@ -1160,7 +1095,6 @@ function typeChar(text, ch) {
             case 0: return TELEX(text, ch, 0);
             case 29: return TELEX(text, ch, 0);
             case 32: return TELEX(text, ch, 0);
-            case 5: return PINYIN(text, ch);
             case 14: return TELEX(text, ch, 1);
         }
     }
@@ -1389,137 +1323,6 @@ function mcTELEX(c, m, ethn) {
 				case '̱':
 					return "";
             }
-            break;
-    }
-    return c;
-}
-
-function PINYIN(text, ch) {
-    if (text == "")
-        return text + ch;
-    if (ch == "v")
-        return text + 'ü';
-    if (!isNaN(ch)) {
-        if (ch == '5') {
-            var a = text;
-            var i = 0;
-            for (i = text.length - 1; i >= 0; i--) {
-                if ("áàǎāéèěēóòôǒōúùǔūüǘǜǚǖíìǐīńǹ̂̌̄̈ḿ̂̌̄̀".indexOf(a[i]) > -1) {
-                    var ns = text.replace(a[i], mcPINYIN(a[i], ch));
-                    return ns;
-                }
-            }
-            return text;
-        }
-        var ns;
-        ns = text.replace("a", mcPINYIN("a", ch));
-        if (text != ns)
-            return ns;
-        ns = text.replace("e", mcPINYIN("e", ch));
-        if (text != ns)
-            return ns;
-        ns = text.replace("o", mcPINYIN("o", ch));
-        if (text != ns)
-            return ns;
-        ns = text.replace("ui", mcPINYIN("y", ch));
-        if (text != ns)
-            return ns;
-        ns = text.replace("u", mcPINYIN("u", ch));
-        if (text != ns)
-            return ns;
-        ns = text.replace("i", mcPINYIN("i", ch));
-        if (text != ns)
-            return ns;
-        ns = text.replace("ü", mcPINYIN("ü", ch));
-        if (text != ns)
-            return ns;
-        ns = text.replace("m", mcPINYIN("m", ch));
-        if (text != ns)
-            return ns;
-        ns = text.replace("n", mcPINYIN("n", ch));
-        if (text != ns)
-            return ns;
-    }
-    return text + ch;
-}
-
-function mcPINYIN(c, m) {
-    if (m == '5') {
-        switch (c) {
-            case 'á': case 'à': case 'ǎ': case 'ā':
-                return "a";
-            case 'é': case 'è': case 'ě': case 'ē':
-                return "e";
-            case 'ó': case 'ò': case 'ǒ': case 'ō':
-                return "o";
-            case 'ú': case 'ù': case 'ǔ': case 'ū':
-                return "u";
-            case 'ǘ': case 'ǜ': case 'ǚ': case 'ǖ':
-                return "ü";
-            case 'í': case 'ì': case 'ǐ': case 'ī':
-                return "i";
-            case 'ń': case 'ǹ':
-                return "n";
-            case '̂': case '̌': case '̄': case '̀':
-                return "";
-            case 'ḿ':
-                return "m";
-        }
-    }
-    switch (c) {
-        case 'a':
-            if (m == '2') return "á";
-            if (m == '4') return "à";
-            if (m == '3') return "ǎ";
-            if (m == '1') return "ā";
-            break;
-        case 'e':
-            if (m == '2') return "é";
-            if (m == '4') return "è";
-            if (m == '3') return "ě";
-            if (m == '1') return "ē";
-            break;
-        case 'o':
-            if (m == '2') return "ó";
-            if (m == '4') return "ò";
-            if (m == '3') return "ǒ";
-            if (m == '1') return "ō";
-            break;
-        case 'y':
-            if (m == '2') return "uí";
-            if (m == '4') return "uì";
-            if (m == '3') return "uǐ";
-            if (m == '1') return "uī";
-            return "ui";
-        case 'u':
-            if (m == '2') return "ú";
-            if (m == '4') return "ù";
-            if (m == '3') return "ǔ";
-            if (m == '1') return "ū";
-            break;
-        case 'i':
-            if (m == '2') return "í";
-            if (m == '4') return "ì";
-            if (m == '3') return "ǐ";
-            if (m == '1') return "ī";
-            break;
-        case 'ü':
-            if (m == '2') return "ǘ";
-            if (m == '4') return "ǜ";
-            if (m == '3') return "ǚ";
-            if (m == '1') return "ǖ";
-            break;
-        case 'n':
-            if (m == '2') return "ń";
-            if (m == '4') return "ǹ";
-            if (m == '3') return "ň";
-            if (m == '1') return "n̄";
-            break;
-        case 'm':
-            if (m == '2') return "ḿ";
-            if (m == '4') return "m̀";
-            if (m == '3') return "m̌";
-            if (m == '1') return "m̄";
             break;
     }
     return c;
