@@ -11,7 +11,7 @@ function $css(el, props) {
 }
 
 var shiftbool = false;
-var kblist = ["E→文"];
+var kblist = ["E→文", "E→P", "P→文"];
 var keyboard = 0;
 var contents = [];
 var condb;
@@ -689,7 +689,6 @@ function addSelCompound(ruby) {
         conqSz++;
         conrSz = cubo.length;
     }
-    tqSz = trSz = tcSz = cubo.length;
 
     if (contail != "") {
         var truby = contail + ruby;
@@ -705,7 +704,6 @@ function addSelCompound(ruby) {
                 conlenbuf = conlentmp;
             }
         }
-        tqSz = trSz = tcSz = cubo.length;
         contents = condb.exec("SELECT cword, c" + optta + " FROM cmpnom WHERE c" + optta + " like '" + truby.replace(/\'/g, "''") + " %'");
         xstr = "";
         split = null;
@@ -901,7 +899,6 @@ function selPhone(phrase, maxlevel, defa){
                 pconqSz++;
                 pconrSz = pcubo.length;
             }
-            ptqSz = ptrSz = ptcSz = pcubo.length;
 
             if (pcontail != "") {
                 var truby = pcontail + fullchar;
@@ -917,7 +914,6 @@ function selPhone(phrase, maxlevel, defa){
                         pconlenbuf = pconlentmp;
                     }
                 }
-                ptqSz = ptrSz = ptcSz = pcubo.length;
                 contents = condb.exec("SELECT c" + optta + ", cword FROM cmpnom WHERE cword like '" + truby + ":%' AND c" + optta + " <> '' AND c" + optta + " IS NOT NULL");
                 xstr = [];
                 split = null;
@@ -1097,7 +1093,6 @@ function selChar(phrase, maxlevel, defa) {
                 pconqSz++;
                 pconrSz = pcubo.length;
             }
-            ptqSz = ptrSz = ptcSz = pcubo.length;
 
             if (pcontail != "") {
                 var truby = pcontail + fullchar;
@@ -1113,7 +1108,6 @@ function selChar(phrase, maxlevel, defa) {
                         pconlenbuf = pconlentmp;
                     }
                 }
-                ptqSz = ptrSz = ptcSz = pcubo.length;
                 contents = condb.exec("SELECT cword, c" + optta + " FROM cmpnom WHERE c" + optta + " like '" + truby.replace(/\'/g, "''") + " %'");
                 xstr = [];
                 split = null;
@@ -1270,15 +1264,9 @@ function delList() {
 
 function whitelist() {
     document.querySelectorAll(".outopt").forEach(function(el) { $css(el, { 'background': 'none', 'color': '#f0e0c0' }); });
-    document.getElementById("w1").innerHTML = "";
-    document.getElementById("w2").innerHTML = "";
-    document.getElementById("w3").innerHTML = "";
-    document.getElementById("w4").innerHTML = "";
-    document.getElementById("w5").innerHTML = "";
-    document.getElementById("w6").innerHTML = "";
-    document.getElementById("w7").innerHTML = "";
-    document.getElementById("w8").innerHTML = "";
-    document.getElementById("w9").innerHTML = "";
+    for (var i = 1; i <= 9; i++) {
+        document.getElementById("w" + i).innerHTML = "";
+    }
 }
 
 function setSelectedIndex(ind) {
@@ -1290,30 +1278,13 @@ function setSelectedIndex(ind) {
     document.getElementById("txtPad").focus();
 }
 
+var toneNumbMap = {
+    '!': '1', '@': '2', '#': '3', '$': '4', '%': '5',
+    '^': '6', '&': '7', '*': '8', '(': '9', ')': '0'
+};
 function toneNumb(tonechar) {
-    switch (tonechar) {
-        case('!'):
-            return '1';
-        case('@'):
-            return '2';
-        case('#'):
-            return '3';
-        case('$'):
-            return '4';
-        case('%'):
-            return '5';
-        case('^'):
-            return '6';
-        case('&'):
-            return '7';
-        case('*'):
-            return '8';
-        case('('):
-            return '9';
-        case(')'):
-            return '0';
-        
-    }
+    if (Object.prototype.hasOwnProperty.call(toneNumbMap, tonechar))
+        return toneNumbMap[tonechar];
     return tonechar;
 }
 function typeChar(text, ch) {
@@ -1689,7 +1660,4 @@ function mcPINYIN(c, m) {
 
 function share() {
   navigator.clipboard.writeText(document.getElementById("txtPadout").innerHTML.replace(/ <br> /g, "\n"));
-}
-String.prototype.startsWith = function (str) {
-    return this.indexOf(str) == 0;
 }
