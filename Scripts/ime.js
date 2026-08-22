@@ -21,7 +21,6 @@ var conlentail = 0;
 var concSz = 0;
 var conqSz = 0;
 var conrSz = 0;
-var contcSz = 0;
 var contqSz = 0;
 var contrSz = 0;
 var contail = "";
@@ -238,14 +237,7 @@ function txtPadKeyTyped(evt) {
             contail = rubystr + " ";
         } else if (ind < conrSz)
             conqueue = contail = "";
-        else if (ind < contcSz) {
-            conlenbuf = conlentail;
-            if (contcSz == contqSz)
-                conqueue = "";
-            else
-                conqueue = contail + rubystr + " ";
-            contail = "";
-        } else if (ind < contqSz) {
+        else if (ind < contqSz) {
             conlenbuf = conlentail;
             conqueue = contail + rubystr + " ";
             contail = rubystr + " ";
@@ -440,7 +432,6 @@ function upPage() {
     concSz += 9;
     conrSz += 9;
     contqSz += 9;
-    contcSz += 9;
     contrSz += 9;
     bPgdn = true;
     if (pgBe == 0) {
@@ -460,7 +451,6 @@ function dnPage() {
     concSz -= 9;
     conrSz -= 9;
     contqSz -= 9;
-    contcSz -= 9;
     contrSz -= 9;
     bPgup = true;
     var optionsublist;
@@ -712,7 +702,7 @@ function compoundLookup(matchCol, selectCol, key, size, matchDelim, splitDelim, 
 // per-unit loop, looks up compound matches for the queue (buffer built
 // so far) and tail (current prefix candidate) extended by fullchar, then
 // advances queue/tail based on what compoundLookup found. This is the
-// same 7-branch dispatch chain (c/q/r/tc/tq/tr/else) used at module
+// same 6-branch dispatch chain (c/q/r/tq/tr/else) used at module
 // scope by the SPACE-key handler in txtPadKeyTyped, but driven by
 // "did this step's lookup find anything" rather than "is the selected
 // index inside this bucket" — so it is not merged with that one.
@@ -723,7 +713,7 @@ function compoundLookup(matchCol, selectCol, key, size, matchDelim, splitDelim, 
 //                 delimiter (":" for selPhone, " " for selChar)
 // Returns { queue, tail, cubo } for the caller to assign back.
 function advanceCompoundWindow(queue, tail, fullchar, matchCol, selectCol, delim, splitDelim, guard, escapeKey) {
-    var cSz = 0, qSz = 0, rSz = 0, tcSz = 0, tqSz = 0, trSz = 0;
+    var cSz = 0, qSz = 0, rSz = 0, tqSz = 0, trSz = 0;
     var cubo = [];
 
     if (queue != "") {
@@ -757,9 +747,6 @@ function advanceCompoundWindow(queue, tail, fullchar, matchCol, selectCol, delim
         tail = fullchar + delim;
     } else if (rSz > 0) {
         queue = tail = "";
-    } else if (tcSz > 0) {
-        queue = (tcSz == tqSz) ? "" : (tail + fullchar + delim);
-        tail = "";
     } else if (tqSz > 0) {
         queue = tail + fullchar + delim;
         tail = fullchar + delim;
@@ -950,7 +937,7 @@ function listUpdate() {
 
 function delList() {
     optionlist = [];
-    conqSz = conrSz = concSz = contqSz = contrSz = contcSz = 0;
+    conqSz = conrSz = concSz = contqSz = contrSz = 0;
     selectedindex = 0;
     pgBe = 0;
     pgEn = 0;
