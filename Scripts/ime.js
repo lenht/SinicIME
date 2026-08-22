@@ -521,7 +521,7 @@ function addSelRuby(ruby) {
     }
 
     if (sugCB) {
-        contents = condb.exec("select word, ruby from " + opttable + " where " + optruby + " like '" + sqlEscape(ruby).toLowerCase() + "%' and " + optruby + "!='" + ruby + "' " + optlev + "");
+        contents = condb.exec("select word, ruby from " + opttable + " where " + optruby + " like '" + sqlEscape(ruby).toLowerCase() + "%' and " + optruby + "!='" + ruby + "' " + optlev + " order by rowid");
         if (contents.length != 0) {
             if (cubo.length > 0)
                 cubo.push(ruby);
@@ -681,7 +681,7 @@ function compoundLookup(matchCol, selectCol, key, size, matchDelim, splitDelim, 
     }
     var excSz = pcubo.length;
 
-    contents = condb.exec("SELECT " + selectCol + ", " + matchCol + " FROM cmpnom WHERE " + matchCol + " like '" + key + matchDelim + "%'" + extraGuard);
+    contents = condb.exec("SELECT " + selectCol + ", " + matchCol + " FROM cmpnom WHERE " + matchCol + " like '" + key + matchDelim + "%'" + extraGuard + " ORDER BY rowid");
     split = null;
     var rubo = [];
     if (contents.length != 0) {
@@ -902,7 +902,7 @@ function selExample(word, ruby) {
     var cubo = [];
     var i;
     var cubostr = "<table>";
-    contents = condb.exec("SELECT cword, c" + opttable + " FROM cmpnom WHERE c" + opttable + " LIKE '" + sqlEscape(ruby) + " %' OR c" + opttable + " LIKE '% " + sqlEscape(ruby) + "' OR c" + opttable + " LIKE '% " + sqlEscape(ruby) + " %'");
+    contents = condb.exec("SELECT cword, c" + opttable + " FROM cmpnom WHERE c" + opttable + " LIKE '" + sqlEscape(ruby) + " %' OR c" + opttable + " LIKE '% " + sqlEscape(ruby) + "' OR c" + opttable + " LIKE '% " + sqlEscape(ruby) + " %' ORDER BY rowid");
     if (contents.length != 0) {
         for (i = 0; i < contents[0].values.length; i++) {
             if (contents[0].values[i][0].indexOf(word) > -1) {
