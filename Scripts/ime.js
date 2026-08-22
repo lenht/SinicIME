@@ -40,7 +40,6 @@ var opttable = "rubynom";
 var optruby = "ruby";
 var optlev = "and level>1";
 var sugCB = false;
-var quocngu = 0;
 
 var oo = false;
 
@@ -950,11 +949,6 @@ function selExample(word, ruby) {
     var cubo = [];
     var i;
     var cubostr = "<table>";
-    if (quocngu == 1) {
-        cubostr += "</table>";
-        document.getElementById("example").innerHTML = cubostr;
-        return;
-    }
     contents = condb.exec("SELECT cword, c" + opttable + " FROM cmpnom WHERE c" + opttable + " LIKE '" + sqlEscape(ruby) + " %' OR c" + opttable + " LIKE '% " + sqlEscape(ruby) + "' OR c" + opttable + " LIKE '% " + sqlEscape(ruby) + " %'");
     if (contents.length != 0) {
         for (i = 0; i < contents[0].values.length; i++) {
@@ -1036,9 +1030,7 @@ function toneNumb(tonechar) {
 }
 function typeChar(text, ch) {
     if (keyboard != 2) {
-        switch (quocngu) {
-            case 0: return TELEX(text, ch);
-        }
+        return TELEX(text, ch);
     }
     return text + ch;
 }
