@@ -708,6 +708,72 @@ function compoundLookup(matchCol, selectCol, key, size, matchDelim, splitDelim, 
     return { pcubo: pcubo, excSz: excSz, prefixFound: prefixFound, finalSz: finalSz };
 }
 
+// Shared by selPhone and selChar: for one character/word step of their
+// per-unit loop, looks up compound matches for the queue (buffer built
+// so far) and tail (current prefix candidate) extended by fullchar, then
+// advances queue/tail based on what compoundLookup found. This is the
+// same 7-branch dispatch chain (c/q/r/tc/tq/tr/else) used at module
+// scope by the SPACE-key handler in txtPadKeyTyped, but driven by
+// "did this step's lookup find anything" rather than "is the selected
+// index inside this bucket" — so it is not merged with that one.
+//   queue/tail  : current compound-match buffers (strings)
+//   fullchar    : the character/word unit being appended this step
+//   matchCol/selectCol/delim/splitDelim/guard/escapeKey : same roles as
+//                 compoundLookup's params; delim is also the unit-join
+//                 delimiter (":" for selPhone, " " for selChar)
+// Returns { queue, tail, cubo } for the caller to assign back.
+function advanceCompoundWindow(queue, tail, fullchar, matchCol, selectCol, delim, splitDelim, guard, escapeKey) {
+    var cSz = 0, qSz = 0, rSz = 0, tcSz = 0, tqSz = 0, trSz = 0;
+    var cubo = [];
+
+    if (queue != "") {
+        var cfullchar = queue + fullchar;
+        var csize = cfullchar.split(delim).length;
+        var key = escapeKey ? sqlEscape(cfullchar) : cfullchar;
+        var r = compoundLookup(matchCol, selectCol, key, csize, delim, splitDelim, guard, cubo);
+        cubo = r.pcubo;
+        cSz = r.excSz;
+        qSz = r.excSz + (r.prefixFound ? 1 : 0);
+        rSz = r.prefixFound ? r.finalSz : r.excSz;
+
+        if (tail != "") {
+            var truby = tail + fullchar;
+            var tsize = truby.split(delim).length;
+            var tkey = escapeKey ? sqlEscape(truby) : truby;
+            var r2 = compoundLookup(matchCol, selectCol, tkey, tsize, delim, splitDelim, guard, cubo);
+            cubo = r2.pcubo;
+            if (r2.prefixFound) {
+                tqSz++;
+                trSz = r2.finalSz;
+            }
+        }
+    }
+
+    if (cSz > 0) {
+        queue = (cSz == qSz) ? "" : (queue + fullchar + delim);
+        tail = "";
+    } else if (qSz > 0) {
+        queue = queue + fullchar + delim;
+        tail = fullchar + delim;
+    } else if (rSz > 0) {
+        queue = tail = "";
+    } else if (tcSz > 0) {
+        queue = (tcSz == tqSz) ? "" : (tail + fullchar + delim);
+        tail = "";
+    } else if (tqSz > 0) {
+        queue = tail + fullchar + delim;
+        tail = fullchar + delim;
+    } else if (trSz > 0) {
+        queue = tail = "";
+    } else {
+        queue = fullchar + delim;
+        tail = "";
+        cubo = [];
+    }
+
+    return { queue: queue, tail: tail, cubo: cubo };
+}
+
 function selPhone(phrase, maxlevel, defa){
     var ext = !defa;
     if ((phrase.length == 1) && defa)
@@ -719,18 +785,11 @@ function selPhone(phrase, maxlevel, defa){
     var sql = "";
     var fullchar;
 
-    var pconcSz = 0;
-    var pconqSz = 0;
-    var pconrSz = 0;
-    var pcontcSz = 0;
-    var pcontqSz = 0;
-    var pcontrSz = 0;
     var pcontail = "";
     var pconqueue = "";
     var pcubo = [];
 
     for (k = 0; k != word.length; k++) {
-        pconqSz = pconrSz = pconcSz = pcontqSz = pcontrSz = pcontcSz = 0;
         if ((word[k].charCodeAt(0) < 0xD800) || (word[k].charCodeAt(0) >= 0xE000)) {
             fullchar = word[k];
         } else {
@@ -741,29 +800,12 @@ function selPhone(phrase, maxlevel, defa){
             k++;
         }
 
-        pcubo = [];
-        if (pconqueue != "") {
-            var optta = opttable;
-            var guard = " AND c" + optta + " <> '' AND c" + optta + " IS NOT NULL";
-            var cfullchar = pconqueue + fullchar;
-            var csize = cfullchar.split(":").length;
-            var r = compoundLookup("cword", "c" + optta, cfullchar, csize, ":", " ", guard, pcubo);
-            pcubo = r.pcubo;
-            pconcSz = r.excSz;
-            pconqSz = r.excSz + (r.prefixFound ? 1 : 0);
-            pconrSz = r.prefixFound ? r.finalSz : r.excSz;
-
-            if (pcontail != "") {
-                var truby = pcontail + fullchar;
-                var tsize = truby.split(":").length;
-                var r2 = compoundLookup("cword", "c" + optta, truby, tsize, ":", " ", guard, pcubo);
-                pcubo = r2.pcubo;
-                if (r2.prefixFound) {
-                    pcontqSz++;
-                    pcontrSz = r2.finalSz;
-                }
-            }
-        }
+        var optta = opttable;
+        var guard = " AND c" + optta + " <> '' AND c" + optta + " IS NOT NULL";
+        var step = advanceCompoundWindow(pconqueue, pcontail, fullchar, "cword", "c" + optta, ":", " ", guard, false);
+        pconqueue = step.queue;
+        pcontail = step.tail;
+        pcubo = step.cubo;
         var q;
 
         sql = "select " + optruby + ", (level % " + maxlevel + ") from " + opttable + " where word='" + fullchar + "' order by (level % " + maxlevel + ") desc";
@@ -775,34 +817,6 @@ function selPhone(phrase, maxlevel, defa){
                     sss = sss + "/" + contents[0].values[q][0];
                 }
             }
-        }
-
-        if (pconcSz > 0) {
-            if (pconcSz == pconqSz)
-                pconqueue = "";
-            else
-                pconqueue = pconqueue + fullchar + ":";
-            pcontail = "";
-        } else if (pconqSz > 0) {
-            pconqueue = pconqueue + fullchar + ":";
-            pcontail = fullchar + ":";
-        } else if (pconrSz > 0) {
-            pconqueue = pcontail = "";
-        } else if (pcontcSz > 0) {
-            if (pcontcSz == pcontqSz)
-                pconqueue = "";
-            else
-                pconqueue = pcontail + fullchar + ":";
-            pcontail = "";
-        } else if (pcontqSz > 0) {
-            pconqueue = pcontail + fullchar + ":";
-            pcontail = fullchar + ":";
-        } else if (pcontrSz > 0) {
-            pconqueue = pcontail = "";
-        } else {
-            pconqueue = fullchar + ":";
-            pcontail = "";
-            pcubo = [];
         }
 
         if (pcubo.length != 0) {
@@ -846,45 +860,20 @@ function selChar(phrase, maxlevel, defa) {
     var fullcharcase;
     var fullchar;
 
-    var pconcSz = 0;
-    var pconqSz = 0;
-    var pconrSz = 0;
-    var pcontcSz = 0;
-    var pcontqSz = 0;
-    var pcontrSz = 0;
     var pcontail = "";
     var pconqueue = "";
     var pcubo = [];
 
     for (k = 0; k != word.length; k++) {
-        pconqSz = pconrSz = pconcSz = pcontqSz = pcontrSz = pcontcSz = 0;
-
         fullcharcase = word[k];
 
         fullchar = fullcharcase.toLowerCase();
 
-        pcubo = [];
-        if (pconqueue != "") {
-            var optta = opttable;
-            var cfullchar = pconqueue + fullchar;
-            var csize = cfullchar.split(" ").length;
-            var r = compoundLookup("c" + optta, "cword", sqlEscape(cfullchar), csize, " ", ":", "", pcubo);
-            pcubo = r.pcubo;
-            pconcSz = r.excSz;
-            pconqSz = r.excSz + (r.prefixFound ? 1 : 0);
-            pconrSz = r.prefixFound ? r.finalSz : r.excSz;
-
-            if (pcontail != "") {
-                var truby = pcontail + fullchar;
-                var tsize = truby.split(" ").length;
-                var r2 = compoundLookup("c" + optta, "cword", sqlEscape(truby), tsize, " ", ":", "", pcubo);
-                pcubo = r2.pcubo;
-                if (r2.prefixFound) {
-                    pcontqSz++;
-                    pcontrSz = r2.finalSz;
-                }
-            }
-        }
+        var optta = opttable;
+        var step = advanceCompoundWindow(pconqueue, pcontail, fullchar, "c" + optta, "cword", " ", ":", "", true);
+        pconqueue = step.queue;
+        pcontail = step.tail;
+        pcubo = step.cubo;
         var q;
 
         sql = "select word,(level % " + maxlevel + ") from " + opttable + " where " + optruby + "='" + sqlEscape(fullchar) + "' order by (level % " + maxlevel + ") desc";
@@ -896,34 +885,6 @@ function selChar(phrase, maxlevel, defa) {
                     sss = sss + "/" + contents[0].values[q][0];
                 }
             }
-        }
-
-        if (pconcSz > 0) {
-            if (pconcSz == pconqSz)
-                pconqueue = "";
-            else
-                pconqueue = pconqueue + fullchar + " ";
-            pcontail = "";
-        } else if (pconqSz > 0) {
-            pconqueue = pconqueue + fullchar + " ";
-            pcontail = fullchar + " ";
-        } else if (pconrSz > 0) {
-            pconqueue = pcontail = "";
-        } else if (pcontcSz > 0) {
-            if (pcontcSz == pcontqSz)
-                pconqueue = "";
-            else
-                pconqueue = pcontail + fullchar + " ";
-            pcontail = "";
-        } else if (pcontqSz > 0) {
-            pconqueue = pcontail + fullchar + " ";
-            pcontail = fullchar + " ";
-        } else if (pcontrSz > 0) {
-            pconqueue = pcontail = "";
-        } else {
-            pconqueue = fullchar + " ";
-            pcontail = "";
-            pcubo = [];
         }
 
         if (pcubo.length != 0) {
