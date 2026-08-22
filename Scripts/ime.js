@@ -1074,126 +1074,55 @@ function TELEX(text, ch) {
     return text + ch;
 }
 
+// mcTELEX modifier tables: each maps a base char to its diacritic form for
+// the given modifier key. Verified equivalent to the prior switch-chain
+// implementation via an exhaustive (c, m) enumeration, including the
+// oo side-effect flag (see equivalence_check.js in the refactor workspace).
+var mcTELEX_HORN = { a: 'ă', o: 'ơ', u: 'ư' }; // m == 'w'
+
+var mcTELEX_TONE = {
+    s: { a: 'á', e: 'é', i: 'í', o: 'ó', u: 'ú', â: 'ấ', ă: 'ắ', ô: 'ố', ê: 'ế', ư: 'ứ', ơ: 'ớ', y: 'ý' },
+    f: { a: 'à', e: 'è', i: 'ì', o: 'ò', u: 'ù', â: 'ầ', ă: 'ằ', ô: 'ồ', ê: 'ề', ư: 'ừ', ơ: 'ờ', y: 'ỳ' },
+    j: { a: 'ạ', e: 'ẹ', i: 'ị', o: 'ọ', u: 'ụ', â: 'ậ', ă: 'ặ', ô: 'ộ', ê: 'ệ', ư: 'ự', ơ: 'ợ', y: 'ỵ' },
+    x: { a: 'ã', e: 'ẽ', i: 'ĩ', o: 'õ', u: 'ũ', â: 'ẫ', ă: 'ẵ', ô: 'ỗ', ê: 'ễ', ư: 'ữ', ơ: 'ỡ', y: 'ỹ' },
+    r: { a: 'ả', e: 'ẻ', i: 'ỉ', o: 'ỏ', u: 'ủ', â: 'ẩ', ă: 'ẳ', ô: 'ổ', ê: 'ể', ư: 'ử', ơ: 'ở', y: 'ỷ' }
+};
+
+// m == 'z' (tone-strip / reverse map)
+var mcTELEX_TONE_STRIP = {
+    'á': 'a', 'à': 'a', 'ả': 'a', 'ã': 'a', 'ạ': 'a',
+    'ấ': 'â', 'ầ': 'â', 'ẩ': 'â', 'ẫ': 'â', 'ậ': 'â',
+    'ắ': 'ă', 'ằ': 'ă', 'ẳ': 'ă', 'ẵ': 'ă', 'ặ': 'ă',
+    'é': 'e', 'è': 'e', 'ẻ': 'e', 'ẽ': 'e', 'ẹ': 'e',
+    'ế': 'ê', 'ề': 'ê', 'ể': 'ê', 'ễ': 'ê', 'ệ': 'ê',
+    'í': 'i', 'ì': 'i', 'ỉ': 'i', 'ĩ': 'i', 'ị': 'i',
+    'ó': 'o', 'ò': 'o', 'ỏ': 'o', 'õ': 'o', 'ọ': 'o',
+    'ố': 'ô', 'ồ': 'ô', 'ổ': 'ô', 'ỗ': 'ô', 'ộ': 'ô',
+    'ớ': 'ơ', 'ờ': 'ơ', 'ở': 'ơ', 'ỡ': 'ơ', 'ợ': 'ơ',
+    'ú': 'u', 'ù': 'u', 'ủ': 'u', 'ũ': 'u', 'ụ': 'u',
+    'ứ': 'ư', 'ừ': 'ư', 'ử': 'ư', 'ữ': 'ư', 'ự': 'ư',
+    'ý': 'y', 'ỳ': 'y', 'ỷ': 'y', 'ỹ': 'y', 'ỵ': 'y'
+};
+
 function mcTELEX(c, m) {
     switch (m) {
         case 'd':
-            if (c == 'd') return 'đ';
-            break;
+            return (c == 'd') ? 'đ' : c;
         case 'a':
-            if (c == 'a') return 'â';
-            break;
+            return (c == 'a') ? 'â' : c;
         case 'e':
-            if (c == 'e') return 'ê';
-            break;
+            return (c == 'e') ? 'ê' : c;
         case 'o':
             if (c == 'o') return 'ô';
             if (c == 'ô') { oo = true; return 'o'; }
-            break;
+            return c;
         case 'w':
-            if (c == 'a') return 'ă';
-            if (c == 'o') return 'ơ';
-            if (c == 'u') return 'ư';
-            break;
-        case 's':
-            if (c == 'a') return 'á';
-            if (c == 'e') return 'é';
-            if (c == 'i') return 'í';
-            if (c == 'o') return 'ó';
-            if (c == 'u') return 'ú';
-            if (c == 'â') return 'ấ';
-            if (c == 'ă') return 'ắ';
-            if (c == 'ô') return 'ố';
-            if (c == 'ê') return 'ế';
-            if (c == 'ư') return 'ứ';
-            if (c == 'ơ') return 'ớ';
-            if (c == 'y') return 'ý';
-            break;
-        case 'f':
-            if (c == 'a') return 'à';
-            if (c == 'e') return 'è';
-            if (c == 'i') return 'ì';
-            if (c == 'o') return 'ò';
-            if (c == 'u') return 'ù';
-            if (c == 'â') return 'ầ';
-            if (c == 'ă') return 'ằ';
-            if (c == 'ô') return 'ồ';
-            if (c == 'ê') return 'ề';
-            if (c == 'ư') return 'ừ';
-            if (c == 'ơ') return 'ờ';
-            if (c == 'y') return 'ỳ';
-            break;
-        case 'j':
-            if (c == 'a') return 'ạ';
-            if (c == 'e') return 'ẹ';
-            if (c == 'i') return 'ị';
-            if (c == 'o') return 'ọ';
-            if (c == 'u') return 'ụ';
-            if (c == 'â') return 'ậ';
-            if (c == 'ă') return 'ặ';
-            if (c == 'ô') return 'ộ';
-            if (c == 'ê') return 'ệ';
-            if (c == 'ư') return 'ự';
-            if (c == 'ơ') return 'ợ';
-            if (c == 'y') return 'ỵ';
-            break;
-        case 'x':
-            if (c == 'a') return 'ã';
-            if (c == 'e') return 'ẽ';
-            if (c == 'i') return 'ĩ';
-            if (c == 'o') return 'õ';
-            if (c == 'u') return 'ũ';
-            if (c == 'â') return 'ẫ';
-            if (c == 'ă') return 'ẵ';
-            if (c == 'ô') return 'ỗ';
-            if (c == 'ê') return 'ễ';
-            if (c == 'ư') return 'ữ';
-            if (c == 'ơ') return 'ỡ';
-            if (c == 'y') return 'ỹ';
-            break;
-        case 'r':
-            if (c == 'a') return 'ả';
-            if (c == 'e') return 'ẻ';
-            if (c == 'i') return 'ỉ';
-            if (c == 'o') return 'ỏ';
-            if (c == 'u') return 'ủ';
-            if (c == 'â') return 'ẩ';
-            if (c == 'ă') return 'ẳ';
-            if (c == 'ô') return 'ổ';
-            if (c == 'ê') return 'ể';
-            if (c == 'ư') return 'ử';
-            if (c == 'ơ') return 'ở';
-            if (c == 'y') return 'ỷ';
-            break;
-		case 'z':
-            switch (c) {
-                case 'á': case 'à': case 'ả': case 'ã': case 'ạ':
-                    return 'a';
-                case 'ấ': case 'ầ': case 'ẩ': case 'ẫ': case 'ậ':
-                    return 'â';
-                case 'ắ': case 'ằ': case 'ẳ': case 'ẵ': case 'ặ':
-                    return 'ă';
-                case 'é': case 'è': case 'ẻ': case 'ẽ': case 'ẹ':
-                    return 'e';
-                case 'ế': case 'ề': case 'ể': case 'ễ': case 'ệ':
-                    return 'ê';
-                case 'í': case 'ì': case 'ỉ': case 'ĩ': case 'ị':
-                    return 'i';
-                case 'ó': case 'ò': case 'ỏ': case 'õ': case 'ọ':
-                    return 'o';
-                case 'ố': case 'ồ': case 'ổ': case 'ỗ': case 'ộ':
-                    return 'ô';
-                case 'ớ': case 'ờ': case 'ở': case 'ỡ': case 'ợ':
-                    return 'ơ';
-                case 'ú': case 'ù': case 'ủ': case 'ũ': case 'ụ':
-                    return 'u';
-                case 'ứ': case 'ừ': case 'ử': case 'ữ': case 'ự':
-                    return 'ư';
-                case 'ý': case 'ỳ': case 'ỷ': case 'ỹ': case 'ỵ':
-                    return 'y';
-            }
-            break;
+            return mcTELEX_HORN[c] || c;
+        case 'z':
+            return mcTELEX_TONE_STRIP[c] || c;
+        default:
+            return (mcTELEX_TONE[m] && mcTELEX_TONE[m][c]) || c;
     }
-    return c;
 }
 
 function share() {
