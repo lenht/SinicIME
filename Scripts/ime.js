@@ -10,6 +10,14 @@ function $css(el, props) {
     }
 }
 
+// Memoized document.getElementById — the elements this project looks up
+// repeatedly (txtPad, rubytype, w1-w9, etc.) are static markup in index.html
+// that's never recreated, so caching by id is safe.
+var _elCache = {};
+function $id(id) {
+    return _elCache[id] || (_elCache[id] = document.getElementById(id));
+}
+
 var shiftbool = false;
 var kblist = ["E→文", "E→P", "P→文"];
 var keyboard = 0;
@@ -56,13 +64,13 @@ xhr.onload = function () {
         console.error("Failed to open imenom:", err);
     }
 
-    $css(document.getElementById("waitscreen"), { display: "none" });
-    document.getElementById("txtPad").focus();
+    $css($id("waitscreen"), { display: "none" });
+    $id("txtPad").focus();
 };
 
 xhr.onerror = function () {
     console.error("Failed to load imenom.jpg");
-    $css(document.getElementById("waitscreen"), { display: "none" });
+    $css($id("waitscreen"), { display: "none" });
 };
 
 xhr.send();
@@ -75,8 +83,8 @@ function sqlEscape(str) {
 
 function optkeyboard(kbsel) {
     keyboard = kbsel;
-    document.getElementById("kbname").innerHTML = kblist[kbsel];
-    document.getElementById("txtPad").focus();
+    $id("kbname").innerHTML = kblist[kbsel];
+    $id("txtPad").focus();
 }
 
 //keydown
@@ -87,14 +95,14 @@ function resetComposition() {
     contail = conqueue = "";
     conlenbuf = 0;
     delList();
-    document.getElementById("rubytype").innerHTML = "";
+    $id("rubytype").innerHTML = "";
     lentype = 0;
 }
 
 function txtPadKeyPressed(evt) {
     var evtK = evt.keyCode || evt.charCode;
-    var txtPadEl = document.getElementById("txtPad");
-    var rubytypeEl = document.getElementById("rubytype");
+    var txtPadEl = $id("txtPad");
+    var rubytypeEl = $id("rubytype");
     if ((evtK == 17) || (evtK == 27) || ([...rubytypeEl.textContent].length >= 12)) { //CTRL or ESC
         resetComposition();
         return;
@@ -105,14 +113,14 @@ function txtPadKeyPressed(evt) {
             shiftbool = true;
             var ind = selectedindex;
             if (ind > 0) {
-                selExample(document.getElementById("w" + ind).textContent, rubytypeEl.textContent);
+                selExample($id("w" + ind).textContent, rubytypeEl.textContent);
                 return;
             }
             var selstart = txtPadEl.selectionStart;
             var selend = txtPadEl.selectionEnd;
             var subtxt = txtPadEl.value.substring(selstart, selend);
             if (subtxt.length > 0)
-                document.getElementById("example").innerHTML = "<table><tr><td>" + logo2phon(subtxt, 20) + "</td></tr></table>";
+                $id("example").innerHTML = "<table><tr><td>" + logo2phon(subtxt, 20) + "</td></tr></table>";
         }
     }
 
@@ -184,8 +192,8 @@ function txtPadKeyPressed(evt) {
 function txtPadKeyTyped(evt) {
     var evtK = evt.keyCode || evt.charCode;
     var evtC = String.fromCharCode(evtK);
-    var txtPadEl = document.getElementById("txtPad");
-    var rubytypeEl = document.getElementById("rubytype");
+    var txtPadEl = $id("txtPad");
+    var rubytypeEl = $id("rubytype");
     var rubystr = rubytypeEl.textContent;
     if (evtK == 13) {   //ENTER
         rubytypeEl.innerHTML = "";
@@ -208,7 +216,7 @@ function txtPadKeyTyped(evt) {
                 conlenbuf = conlentail;
             if (selnum > contrSz)
                 conlenbuf = 0;
-            putWord(document.getElementById("w" + selnum).textContent);
+            putWord($id("w" + selnum).textContent);
         } else {
             var txtarea = txtPadEl.value;
             var caretend = txtPadEl.selectionEnd;
@@ -251,8 +259,8 @@ function txtPadKeyTyped(evt) {
         }
         if (optionlist.length != 0) {
             evt.preventDefault();
-            conlentmp = document.getElementById("w" + selectedindex).textContent.length;
-            putWord(document.getElementById("w" + selectedindex).textContent);
+            conlentmp = $id("w" + selectedindex).textContent.length;
+            putWord($id("w" + selectedindex).textContent);
         }
         txtPadEl.focus();
         return;
@@ -262,7 +270,7 @@ function txtPadKeyTyped(evt) {
         if (ind >= contrSz)
             conlenbuf = 0;
         if (optionlist.length != 0) {
-            putWord(document.getElementById("w" + selectedindex).textContent);
+            putWord($id("w" + selectedindex).textContent);
         }
         conqueue = contail = "";
         conlenbuf = 0;
@@ -279,10 +287,10 @@ function txtPadKeyTyped(evt) {
 
 //keyup
 function txtPadKeyReleased(evt) {
-    document.getElementById("example").innerHTML = "<table><tr><td>"+document.getElementById("DictGuide").value+"</td></tr></table>";
+    $id("example").innerHTML = "<table><tr><td>"+$id("DictGuide").value+"</td></tr></table>";
     if (carpos != -1) {
-        document.getElementById('txtPad').selectionStart = carpos;
-        document.getElementById('txtPad').selectionEnd = carpos;
+        $id('txtPad').selectionStart = carpos;
+        $id('txtPad').selectionEnd = carpos;
         carpos = -1;
     }
     var evtK = evt.keyCode || evt.charCode;
@@ -296,7 +304,7 @@ function rightopt() {
         setSelectedIndex(1);
     }
     if (carpos == -1)
-        carpos = document.getElementById('txtPad').selectionEnd;
+        carpos = $id('txtPad').selectionEnd;
     return;
 }
 
@@ -306,7 +314,7 @@ function leftopt() {
         setSelectedIndex(1);
     }
     if (carpos == -1)
-        carpos = document.getElementById('txtPad').selectionEnd;
+        carpos = $id('txtPad').selectionEnd;
     return;
 }
 
@@ -317,8 +325,8 @@ function leftopt() {
 // keyboards). Wired up conditionally in index.html based on touch support.
 function txtPadKeyInput(evt) {
     var evtK = evt.keyCode || evt.charCode;
-    var txtPadEl = document.getElementById("txtPad");
-    var rubytypeEl = document.getElementById("rubytype");
+    var txtPadEl = $id("txtPad");
+    var rubytypeEl = $id("rubytype");
     var rubystr = rubytypeEl.textContent;
     var curcaret = txtPadEl.selectionEnd;
     var newtxtPadlength = txtPadEl.value.length;
@@ -370,7 +378,7 @@ function txtPadKeyInput(evt) {
             txtPadEl.selectionStart = txtPadEl.selectionEnd = curcaret - 1;
             if (optionlist.length != 0) {
                 evt.preventDefault();
-                var wordEl = document.getElementById("w" + selectedindex);
+                var wordEl = $id("w" + selectedindex);
                 conlentmp = wordEl.textContent.length;
                 putWord(wordEl.textContent);
             }
@@ -388,7 +396,7 @@ function txtPadKeyInput(evt) {
             if (ind >= contrSz)
                 conlenbuf = 0;
             if (optionlist.length != 0) {
-                putWord(document.getElementById("w" + selectedindex).textContent);
+                putWord($id("w" + selectedindex).textContent);
             }
             conqueue = "";
             contail = "";
@@ -412,7 +420,7 @@ function txtPadKeyInput(evt) {
 }
 
 function putWord(instr) {
-    var txtPadEl = document.getElementById("txtPad");
+    var txtPadEl = $id("txtPad");
     var txtarea = txtPadEl.value;
     txtPadEl.selectionStart = txtPadEl.selectionEnd - lentype - conlenbuf;
     var caretbeg = txtPadEl.selectionStart;
@@ -420,7 +428,7 @@ function putWord(instr) {
     txtPadEl.value = txtarea.substring(0, caretbeg) + instr + txtarea.substring(caretend, txtarea.length);
     conlenbuf = 0;
     txtPadEl.selectionStart = txtPadEl.selectionEnd = caretbeg + instr.length;
-    document.getElementById("rubytype").innerHTML = "";
+    $id("rubytype").innerHTML = "";
     lentype = 0;
     delList();
 }
@@ -441,7 +449,7 @@ function upPage() {
     var optionsublist = optionlist.slice(pgBe, pgEn);
     var i;
     for (i = 1; i <= 9; i++) {
-        document.getElementById("w" + i).innerHTML = optionsublist[i - 1];
+        $id("w" + i).innerHTML = optionsublist[i - 1];
     }
 }
 
@@ -459,7 +467,7 @@ function dnPage() {
         pgEn = pgBe + 9;
         optionsublist = optionlist.slice(pgBe, pgEn);
         for (i = 1; i <= 9; i++) {
-            document.getElementById("w" + i).innerHTML = optionsublist[i - 1];
+            $id("w" + i).innerHTML = optionsublist[i - 1];
         }
     } else {
         pgEn = optionlist.length;
@@ -468,7 +476,7 @@ function dnPage() {
         var listsize = pgEn - pgBe;
         whitelist();
         for (i = 1; i <= listsize; i++) {
-            document.getElementById("w" + i).innerHTML = optionsublist[i - 1];
+            $id("w" + i).innerHTML = optionsublist[i - 1];
         }
     }
 }
@@ -566,7 +574,7 @@ function addSelCompound(ruby) {
 
 function convertpad(direction, maxlevel) {
     var convtxt = "";
-    var txtPadEl = document.getElementById("txtPad");
+    var txtPadEl = $id("txtPad");
     switch (direction) {
         case 0:
             convtxt = logo2phon(txtPadEl.value, maxlevel);
@@ -577,12 +585,12 @@ function convertpad(direction, maxlevel) {
         default: break;
     }
     if (convtxt.length > 0) {
-        var txtPadoutEl = document.getElementById("txtPadout");
+        var txtPadoutEl = $id("txtPadout");
         $css(txtPadEl, { 'width': '50%' });
         $css(txtPadoutEl, { 'writing-mode': 'horizontal-tb' });
         $css(txtPadoutEl, { 'display': 'block' });
         txtPadoutEl.innerHTML = convtxt.replace(/\n/g, " <br> ");
-		$css(document.getElementById("copy_button"), { 'display': 'block' });
+		$css($id("copy_button"), { 'display': 'block' });
     } else {
         offpad();
     }
@@ -590,16 +598,16 @@ function convertpad(direction, maxlevel) {
 
 
 function focuspad() {
-    if (document.getElementById("txtPadout").innerHTML == "") {
+    if ($id("txtPadout").innerHTML == "") {
         offpad();
     }
 }
 
 function offpad() {
-        $css(document.getElementById("txtPadout"), { 'display': 'none' });
-        $css(document.getElementById("txtPadout"), { 'writing-mode': 'horizontal-tb' });
-		$css(document.getElementById("copy_button"), { 'display': 'none' });
-        $css(document.getElementById("txtPad"), { 'width': '100%' });
+        $css($id("txtPadout"), { 'display': 'none' });
+        $css($id("txtPadout"), { 'writing-mode': 'horizontal-tb' });
+		$css($id("copy_button"), { 'display': 'none' });
+        $css($id("txtPad"), { 'width': '100%' });
 }
 function logo2phon(pad, maxlevel) {
     if (pad == "")
@@ -903,11 +911,11 @@ function selExample(word, ruby) {
         }
     }
     cubostr += "</table>";
-    document.getElementById("example").innerHTML = cubostr;
+    $id("example").innerHTML = cubostr;
     return;
 }
 function listUpdate() {
-    var rubystr = document.getElementById("rubytype").textContent;
+    var rubystr = $id("rubytype").textContent;
     delList();
     if (rubystr == "")
         return;
@@ -918,14 +926,14 @@ function listUpdate() {
         bPgdn = true;
         var i;
         for (i = 1; i <= 9; i++) {
-            document.getElementById("w" + i).innerHTML = optionlist[i - 1];
+            $id("w" + i).innerHTML = optionlist[i - 1];
         }
         setSelectedIndex(1);
     } else {
         var i;
         whitelist();
         for (i = 1; i <= optionlist.length; i++) {
-            document.getElementById("w" + i).innerHTML = optionlist[i - 1];
+            $id("w" + i).innerHTML = optionlist[i - 1];
         }
         setSelectedIndex(1);
     }
@@ -951,17 +959,17 @@ function clearHighlight() {
 function whitelist() {
     clearHighlight();
     for (var i = 1; i <= 9; i++) {
-        document.getElementById("w" + i).innerHTML = "";
+        $id("w" + i).innerHTML = "";
     }
 }
 
 function setSelectedIndex(ind) {
-    if (document.getElementById("w" + ind).textContent != "") {
+    if ($id("w" + ind).textContent != "") {
         selectedindex = ind;
         clearHighlight();
-        $css(document.getElementById("w" + ind), { 'background': '#eee', 'color': '#000' });
+        $css($id("w" + ind), { 'background': '#eee', 'color': '#000' });
     }
-    document.getElementById("txtPad").focus();
+    $id("txtPad").focus();
 }
 
 var toneNumbMap = {
@@ -1189,5 +1197,5 @@ function mcTELEX(c, m) {
 }
 
 function share() {
-  navigator.clipboard.writeText(document.getElementById("txtPadout").innerHTML.replace(/ <br> /g, "\n"));
+  navigator.clipboard.writeText($id("txtPadout").innerHTML.replace(/ <br> /g, "\n"));
 }
