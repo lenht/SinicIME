@@ -660,8 +660,8 @@ function phon2logo(pad, maxlevel) {
 // joined with " "). Appends results onto pcubo and returns the counts
 // the caller's state dispatch needs.
 //   matchCol/selectCol : cmpnom columns to match against / read from
-//   key                : match key, already escaped by the caller if needed
-//                        (selPhone passes it raw; selChar passes sqlEscape(key))
+//   key                : match key, already escaped by the caller (both
+//                        selPhone and selChar pass sqlEscape(key))
 //   size               : number of pieces the exact-match value is truncated to
 //   matchDelim         : delimiter used for the "LIKE key<delim>%" prefix search
 //   splitDelim         : delimiter used to split selectCol's stored value
@@ -847,7 +847,7 @@ function selPhone(phrase, maxlevel, defa){
             " where word='" + sqlEscape(fullchar) + "' order by (level % " + maxlevel + ") desc";
 
         var step = resolveUnit(pconqueue, pcontail, fullchar, dictSql, ext, "$" + fullchar,
-            { matchCol: "cword", selectCol: "c" + optta, delim: ":", splitDelim: " ", guard: guard, escapeKey: false },
+            { matchCol: "cword", selectCol: "c" + optta, delim: ":", splitDelim: " ", guard: guard, escapeKey: true },
             outputarr);
         pconqueue = step.pconqueue;
         pcontail = step.pcontail;
