@@ -761,20 +761,68 @@ function advanceCompoundWindow(queue, tail, fullchar, matchCol, selectCol, delim
     return { queue: queue, tail: tail, cubo: cubo };
 }
 
+// Shared by selPhone and selChar: resolves one lexical unit (a Sino/Nom
+// character for selPhone, a space-delimited token for selChar) against
+// compound matches (via advanceCompoundWindow) and, failing that, a direct
+// dictionary lookup — then splices the result into outputarr using the same
+// pop/push dance both callers relied on (a compound match replaces however
+// many outputarr entries its previous units occupied with the compound's
+// own unit-count).
+//   fullchar     : lookup key for this unit (already case-folded by caller)
+//   dictSql      : caller-built SQL for the direct dictionary lookup
+//                  (caller is responsible for escaping fullchar within it)
+//   ext          : whether to append all alternate dictionary matches,
+//                  joined by "/"
+//   fallback     : value to push when neither compound nor dictionary match
+//   compoundArgs : { matchCol, selectCol, delim, splitDelim, guard, escapeKey }
+//                  — same roles as advanceCompoundWindow's params
+// Returns { pconqueue, pcontail } for the caller's next iteration; mutates
+// outputarr in place.
+function resolveUnit(pconqueue, pcontail, fullchar, dictSql, ext, fallback, compoundArgs, outputarr) {
+    var step = advanceCompoundWindow(pconqueue, pcontail, fullchar,
+        compoundArgs.matchCol, compoundArgs.selectCol, compoundArgs.delim,
+        compoundArgs.splitDelim, compoundArgs.guard, compoundArgs.escapeKey);
+    var pcubo = step.cubo;
+
+    var sss = "";
+    var contents = condb.exec(dictSql);
+    if (contents.length != 0) {
+        sss = contents[0].values[0][0];
+        if (ext) {
+            for (var q = 1; q < contents[0].values.length; q++) {
+                sss = sss + "/" + contents[0].values[q][0];
+            }
+        }
+    }
+
+    if (pcubo.length != 0) {
+        for (var q = 1; q < pcubo[0].length; q++) {
+            outputarr.pop();
+        }
+        for (var q = 0; q != pcubo[0].length; q++) {
+            outputarr.push(pcubo[0][q]);
+        }
+    } else {
+        outputarr.push(sss.length > 0 ? sss : fallback);
+    }
+
+    return { pconqueue: step.queue, pcontail: step.tail };
+}
+
 function selPhone(phrase, maxlevel, defa){
     var ext = !defa;
     if ((phrase.length == 1) && defa)
         ext = true;
     var outputarr = [];
-    var sss = "";
     var word = phrase;
     var k;
-    var sql = "";
     var fullchar;
 
     var pcontail = "";
     var pconqueue = "";
-    var pcubo = [];
+
+    var optta = opttable;
+    var guard = " AND c" + optta + " <> '' AND c" + optta + " IS NOT NULL";
 
     for (k = 0; k != word.length; k++) {
         if ((word[k].charCodeAt(0) < 0xD800) || (word[k].charCodeAt(0) >= 0xE000)) {
@@ -787,39 +835,14 @@ function selPhone(phrase, maxlevel, defa){
             k++;
         }
 
-        var optta = opttable;
-        var guard = " AND c" + optta + " <> '' AND c" + optta + " IS NOT NULL";
-        var step = advanceCompoundWindow(pconqueue, pcontail, fullchar, "cword", "c" + optta, ":", " ", guard, false);
-        pconqueue = step.queue;
-        pcontail = step.tail;
-        pcubo = step.cubo;
-        var q;
+        var dictSql = "select " + optruby + ", (level % " + maxlevel + ") from " + opttable +
+            " where word='" + sqlEscape(fullchar) + "' order by (level % " + maxlevel + ") desc";
 
-        sql = "select " + optruby + ", (level % " + maxlevel + ") from " + opttable + " where word='" + fullchar + "' order by (level % " + maxlevel + ") desc";
-        contents = condb.exec(sql);
-        if (contents.length != 0) {
-            sss = contents[0].values[0][0];
-            if (ext) {
-                for (q = 1; q < contents[0].values.length; q++) {
-                    sss = sss + "/" + contents[0].values[q][0];
-                }
-            }
-        }
-
-        if (pcubo.length != 0) {
-            for (q = 1; q < pcubo[0].length; q++) {
-                outputarr.pop();
-            }
-            for (q = 0; q != pcubo[0].length; q++) {
-                outputarr.push(pcubo[0][q]);
-            }
-        } else {
-            if (sss.length > 0)
-                outputarr.push(sss);
-            else
-                outputarr.push("$" + fullchar);
-        }
-        sss = "";
+        var step = resolveUnit(pconqueue, pcontail, fullchar, dictSql, ext, "$" + fullchar,
+            { matchCol: "cword", selectCol: "c" + optta, delim: ":", splitDelim: " ", guard: guard, escapeKey: false },
+            outputarr);
+        pconqueue = step.pconqueue;
+        pcontail = step.pcontail;
     }
 
     return outputarr;
@@ -830,7 +853,6 @@ function selChar(phrase, maxlevel, defa) {
     if ((phrase.length == 1) && defa)
         ext = true;
     var outputarr = [];
-    var sss = "";
     phrase = phrase.replace(/\./g, " 。 ");
     phrase = phrase.replace(/,/g, " 、 ");
     phrase = phrase.replace(/:/g, " ： ");
@@ -843,51 +865,26 @@ function selChar(phrase, maxlevel, defa) {
     var word = phrase.split(" ");
     word = word.filter(function (a) { return a !== '' });
     var k;
-    var sql = "";
     var fullcharcase;
     var fullchar;
 
     var pcontail = "";
     var pconqueue = "";
-    var pcubo = [];
+
+    var optta = opttable;
 
     for (k = 0; k != word.length; k++) {
         fullcharcase = word[k];
-
         fullchar = fullcharcase.toLowerCase();
 
-        var optta = opttable;
-        var step = advanceCompoundWindow(pconqueue, pcontail, fullchar, "c" + optta, "cword", " ", ":", "", true);
-        pconqueue = step.queue;
-        pcontail = step.tail;
-        pcubo = step.cubo;
-        var q;
+        var dictSql = "select word,(level % " + maxlevel + ") from " + opttable +
+            " where " + optruby + "='" + sqlEscape(fullchar) + "' order by (level % " + maxlevel + ") desc";
 
-        sql = "select word,(level % " + maxlevel + ") from " + opttable + " where " + optruby + "='" + sqlEscape(fullchar) + "' order by (level % " + maxlevel + ") desc";
-        contents = condb.exec(sql);
-        if (contents.length != 0) {
-            sss = contents[0].values[0][0];
-            if (ext) {
-                for (q = 1; q < contents[0].values.length; q++) {
-                    sss = sss + "/" + contents[0].values[q][0];
-                }
-            }
-        }
-
-        if (pcubo.length != 0) {
-            for (q = 1; q < pcubo[0].length; q++) {
-                outputarr.pop();
-            }
-            for (q = 0; q != pcubo[0].length; q++) {
-                outputarr.push(pcubo[0][q]);
-            }
-        } else {
-            if (sss.length > 0)
-                outputarr.push(sss);
-            else
-                outputarr.push(fullcharcase);
-        }
-        sss = "";
+        var step = resolveUnit(pconqueue, pcontail, fullchar, dictSql, ext, fullcharcase,
+            { matchCol: "c" + optta, selectCol: "cword", delim: " ", splitDelim: ":", guard: "", escapeKey: true },
+            outputarr);
+        pconqueue = step.pconqueue;
+        pcontail = step.pcontail;
     }
 
     return outputarr;
