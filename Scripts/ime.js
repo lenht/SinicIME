@@ -1037,16 +1037,13 @@ function toneNumb(tonechar) {
 function typeChar(text, ch) {
     if (keyboard != 2) {
         switch (quocngu) {
-            case 0: return TELEX(text, ch, 0);
-            case 29: return TELEX(text, ch, 0);
-            case 32: return TELEX(text, ch, 0);
-            case 14: return TELEX(text, ch, 1);
+            case 0: return TELEX(text, ch);
         }
     }
     return text + ch;
 }
 
-function TELEX(text, ch, ethn) {
+function TELEX(text, ch) {
     if (text.length == 0)
         return text + ch;
     var nc;
@@ -1096,7 +1093,7 @@ function TELEX(text, ch, ethn) {
             case 'i':
                 if ((qu == 1) && (gi == -1) && (a[l - 1] == 'u'))
                     break;
-				nc = mcTELEX(a[l - 1], ch, ethn);
+				nc = mcTELEX(a[l - 1], ch);
 				if (nc=="")
 					return a.substring(0, l - 1) + a.substring(l);
                 if (a[l - 1] != nc) {
@@ -1108,7 +1105,7 @@ function TELEX(text, ch, ethn) {
     }
     var i;
     for (i=l; i!=qu; i--) {
-            nc = mcTELEX(a[i], ch, ethn);
+            nc = mcTELEX(a[i], ch);
 			if (nc=="")
 				return a.substring(0, i) + a.substring(i + 1);
             if (a[i]!=nc) {
@@ -1121,7 +1118,7 @@ function TELEX(text, ch, ethn) {
             }
     }
     if (qu == 1) {
-        nc = mcTELEX(a[1], ch, ethn);
+        nc = mcTELEX(a[1], ch);
 		if (nc=="")
 			return a.substring(0, 1) + a.substring(1 + 1);
         if (a[1] != nc) {
@@ -1132,7 +1129,7 @@ function TELEX(text, ch, ethn) {
     return text + ch;
 }
 
-function mcTELEX(c, m, ethn) {
+function mcTELEX(c, m) {
     switch (m) {
         case 'd':
             if (c == 'd') return 'đ';
@@ -1222,23 +1219,6 @@ function mcTELEX(c, m, ethn) {
             if (c == 'ơ') return 'ở';
             if (c == 'y') return 'ỷ';
             break;
-        case 'v':
-            if (ethn==1)
-            {
-                if(c=='a') return "a̱";
-                if(c=='e') return "e̱";
-                if(c=='i') return "i̱";
-                if(c=='o') return "o̱";
-                if(c=='u') return "u̱";
-                if(c=='â') return "â̱";
-                if(c=='ă') return "ă̱";
-                if(c=='ô') return "ô̱";
-                if(c=='ê') return "ê̱";
-                if(c=='ư') return "ư̱";
-                if(c=='ơ') return "ơ̱";
-                if(c=='y') return "y̱";
-            }
-            break;
 		case 'z':
             switch (c) {
                 case 'á': case 'à': case 'ả': case 'ã': case 'ạ':
@@ -1265,8 +1245,6 @@ function mcTELEX(c, m, ethn) {
                     return 'ư';
                 case 'ý': case 'ỳ': case 'ỷ': case 'ỹ': case 'ỵ':
                     return 'y';
-				case '̱':
-					return "";
             }
             break;
     }
