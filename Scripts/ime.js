@@ -545,88 +545,33 @@ function addSelCompound(ruby) {
     var optta = opttable;
     var cruby = conqueue + ruby;
     var csize = cruby.split(" ").length;
-    contents = condb.exec("SELECT cword, c" + optta + " FROM cmpnom WHERE c" + optta + " = '" + sqlEscape(cruby) + "'");
-    var split = null;
-    var cubo = [];
-    var i, j;
-    var xstr = "";
-    if (contents.length != 0) {
-        for (i = 0; i < contents[0].values.length; i++) {
-            split = contents[0].values[i][0].split(":");
-            xstr = "";
-            for (j = 0; j != csize; j++)
-                xstr += split[j];
-            cubo.push(xstr);
-            conlenbuf = conlentmp;
-        }
-    }
-    
-    conqSz = conrSz = concSz = cubo.length;
-    contents = condb.exec("SELECT cword, c" + optta + " FROM cmpnom WHERE c" + optta + " like '" + sqlEscape(cruby) + " %'");
-    xstr = "";
-    split = null;
-    var rubo = [];
-    if (contents.length != 0) {
-        for (i = 0; i < contents[0].values.length; i++) {
-            split = contents[0].values[i][0].split(":");
-            xstr = "";
-            for (j = 0; j != split.length; j++)
-                xstr += split[j];
-            rubo.push(xstr);
-            conlenbuf = conlentmp;
-        }
-    }
-    if (split != null) {
-        xstr = "";
-        for (i = 0; i != csize; i++)
-            xstr += split[i];
-        conlentail = split[i-1].length;
-        cubo.push(xstr);
-        cubo = cubo.concat(rubo);
-        conqSz++;
-        conrSz = cubo.length;
-    }
+    var rawcubo = [];
+
+    var r = compoundLookup("c" + optta, "cword", sqlEscape(cruby), csize, " ", ":", "", rawcubo);
+    rawcubo = r.pcubo;
+    concSz = r.excSz;
+    conqSz = r.excSz + (r.prefixFound ? 1 : 0);
+    conrSz = r.prefixFound ? r.finalSz : r.excSz;
+    if ((r.excSz > 0) || r.prefixFound)
+        conlenbuf = conlentmp;
+    if (r.prefixFound)
+        conlentail = rawcubo[r.excSz][csize - 1].length;
 
     if (contail != "") {
         var truby = contail + ruby;
         var tsize = truby.split(" ").length;
-        contents = condb.exec("SELECT cword, c" + optta + " FROM cmpnom WHERE c" + optta + " = '" + sqlEscape(truby) + "'");
-        if (contents.length != 0) {
-            for (i = 0; i < contents[0].values.length; i++) {
-                split = contents[0].values[i][0].split(":");
-                xstr = "";
-                for (j = 0; j != tsize; j++)
-                    xstr += split[j];
-                cubo.push(xstr);
-                conlenbuf = conlentmp;
-            }
-        }
-        contents = condb.exec("SELECT cword, c" + optta + " FROM cmpnom WHERE c" + optta + " like '" + sqlEscape(truby) + " %'");
-        xstr = "";
-        split = null;
-        rubo = [];
-        if (contents.length != 0) {
-            for (i = 0; i < contents[0].values.length; i++) {
-                split = contents[0].values[i][0].split(":");
-                xstr = "";
-                for (j = 0; j != split.length; j++)
-                    xstr += split[j];
-                rubo.push(xstr);
-                conlenbuf = conlentmp;
-            }
-        }
-
-        if (split != null) {
-            xstr = "";
-            for (i = 0; i != csize; i++)
-                xstr += split[i];
-            conlentail = split[i - 1].length;
-            cubo.push(xstr);
-            cubo = cubo.concat(rubo);
+        var r2 = compoundLookup("c" + optta, "cword", sqlEscape(truby), tsize, " ", ":", "", rawcubo);
+        rawcubo = r2.pcubo;
+        if ((r2.excSz > 0) || r2.prefixFound)
+            conlenbuf = conlentmp;
+        if (r2.prefixFound) {
             contqSz++;
-            contrSz = cubo.length;
+            contrSz = r2.finalSz;
+            conlentail = rawcubo[r2.excSz][tsize - 1].length;
         }
     }
+
+    var cubo = rawcubo.map(function (arr) { return arr.join(""); });
     optionlist = optionlist.concat(cubo);
 }
 
