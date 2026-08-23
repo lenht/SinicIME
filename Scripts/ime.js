@@ -22,7 +22,6 @@ var shiftbool = false;
 var kblist = ["E→文", "E→P", "P→文"];
 var keyboard = 0;
 var contents = [];
-var condb;
 
 // Composition-state cluster: transient state tracking the in-progress
 // compound-word search across keystrokes while the user is composing a
@@ -65,36 +64,29 @@ var sugCB = false;
 
 var oo = false;
 
-// Connect to sqlite db file
-var xhr = new XMLHttpRequest();
-xhr.open('GET', './Resources/imenom.jpg', true);
-xhr.responseType = 'arraybuffer';
+// Load the dictionary data set. Replaces the former sql.js/imenom.jpg
+// pipeline: imenom.json is a flat export of the same two tables
+// (rubynom, cmpnom), and imedata.js builds an in-memory Map + two tries
+// from it (`ime`). See DATA_LAYER_MIGRATION.md for the rationale/
+// benchmarks and OPEN_ITEMS_REVIEW.md for what's still outstanding.
+var ime; // { compoundLookupJS, dictLookupWordJS, dictLookupRubyJS,
+         //   rubyExactLookupJS, rubyPrefixLookupJS, selExampleLookupJS }
 
-xhr.onload = function () {
-    try {
-        var uInt8Array = new Uint8Array(this.response);
-        condb = new SQL.Database(uInt8Array);
+fetch('./Resources/imenom.json')
+    .then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+    })
+    .then(function (data) {
+        ime = IMEData.init(data);
         console.log("imenom loaded");
-    } catch (err) {
-        console.error("Failed to open imenom:", err);
-    }
-
-    $css($id("waitscreen"), { display: "none" });
-    $id("txtPad").focus();
-};
-
-xhr.onerror = function () {
-    console.error("Failed to load imenom.jpg");
-    $css($id("waitscreen"), { display: "none" });
-};
-
-xhr.send();
-
-// Escapes single quotes for inclusion in a SQL string literal (SQLite-style:
-// doubling the quote rather than backslash-escaping it).
-function sqlEscape(str) {
-    return str.replace(/\'/g, "''");
-}
+        $css($id("waitscreen"), { display: "none" });
+        $id("txtPad").focus();
+    })
+    .catch(function (err) {
+        console.error("Failed to load imenom.json:", err);
+        $css($id("waitscreen"), { display: "none" });
+    });
 
 function optkeyboard(kbsel) {
     keyboard = kbsel;
@@ -556,21 +548,19 @@ function addSelRuby(ruby) {
         return;
     }
 
-    contents = condb.exec("SELECT word FROM " + opttable + " WHERE " + optruby + " = '" + sqlEscape(ruby).toLowerCase() + "' " + optlev + " order by level desc");
-    if (contents.length != 0) {
-        var i = 0;
-        for (i = 0; i < contents[0].values.length; i++) {
-            cubo.push(contents[0].values[i]);
-        }
+    var exactWords = ime.rubyExactLookupJS(ruby.toLowerCase());
+    var i = 0;
+    for (i = 0; i < exactWords.length; i++) {
+        cubo.push(exactWords[i]);
     }
 
     if (sugCB) {
-        contents = condb.exec("select word, ruby from " + opttable + " where " + optruby + " like '" + sqlEscape(ruby).toLowerCase() + "%' and " + optruby + "!='" + ruby + "' " + optlev + " order by rowid");
-        if (contents.length != 0) {
+        var prefixPairs = ime.rubyPrefixLookupJS(ruby.toLowerCase(), ruby);
+        if (prefixPairs.length != 0) {
             if (cubo.length > 0)
                 cubo.push(ruby);
-            for (i = 0; i < contents[0].values.length; i++) {
-                cubo.push(contents[0].values[i][0] + ' ' + contents[0].values[i][1]);
+            for (i = 0; i < prefixPairs.length; i++) {
+                cubo.push(prefixPairs[i][0] + ' ' + prefixPairs[i][1]);
             }
         }
     }
@@ -588,7 +578,7 @@ function addSelCompound(ruby) {
     var csize = cruby.split(" ").length;
     var rawcubo = [];
 
-    var r = compoundLookup("c" + optta, "cword", sqlEscape(cruby), csize, " ", ":", "", rawcubo);
+    var r = compoundLookup("c" + optta, "cword", cruby, csize, " ", ":", "", rawcubo);
     rawcubo = r.pcubo;
     conState.cSz = r.excSz;
     conState.qSz = r.excSz + (r.prefixFound ? 1 : 0);
@@ -601,7 +591,7 @@ function addSelCompound(ruby) {
     if (conState.tail != "") {
         var truby = conState.tail + ruby;
         var tsize = truby.split(" ").length;
-        var r2 = compoundLookup("c" + optta, "cword", sqlEscape(truby), tsize, " ", ":", "", rawcubo);
+        var r2 = compoundLookup("c" + optta, "cword", truby, tsize, " ", ":", "", rawcubo);
         rawcubo = r2.pcubo;
         if ((r2.excSz > 0) || r2.prefixFound)
             conState.lenBuf = conState.lenTmp;
@@ -704,50 +694,20 @@ function phon2logo(pad, maxlevel) {
 // joined with " "). Appends results onto pcubo and returns the counts
 // the caller's state dispatch needs.
 //   matchCol/selectCol : cmpnom columns to match against / read from
-//   key                : match key, already escaped by the caller (both
-//                        selPhone and selChar pass sqlEscape(key))
+//   key                : match key, raw (no escaping needed — this is a
+//                        direct trie lookup, not a SQL string build)
 //   size               : number of pieces the exact-match value is truncated to
 //   matchDelim         : delimiter used for the "LIKE key<delim>%" prefix search
 //   splitDelim         : delimiter used to split selectCol's stored value
-//   extraGuard         : extra WHERE-clause fragment (selPhone's NOT NULL/
-//                        empty checks), or "" (selChar has none)
+//   extraGuard         : formerly an extra WHERE-clause fragment
+//                        (selPhone's NOT NULL/empty checks on crubynom).
+//                        Now a no-op here — it's baked into the cwordTrie
+//                        build in imedata.js instead, since selPhone's
+//                        guard was the only caller that ever passed one.
+//                        Kept as a parameter so this signature (and every
+//                        call site) doesn't need to change.
 function compoundLookup(matchCol, selectCol, key, size, matchDelim, splitDelim, extraGuard, pcubo) {
-    var contents = condb.exec("SELECT " + selectCol + ", " + matchCol + " FROM cmpnom WHERE " + matchCol + " = '" + key + "'" + extraGuard);
-    var i, j, split = null;
-    if (contents.length != 0) {
-        for (i = 0; i < contents[0].values.length; i++) {
-            split = contents[0].values[i][0].split(splitDelim);
-            var xstr = [];
-            for (j = 0; j != size; j++)
-                xstr.push(split[j]);
-            pcubo.push(xstr);
-        }
-    }
-    var excSz = pcubo.length;
-
-    contents = condb.exec("SELECT " + selectCol + ", " + matchCol + " FROM cmpnom WHERE " + matchCol + " like '" + key + matchDelim + "%'" + extraGuard + " ORDER BY rowid");
-    split = null;
-    var rubo = [];
-    if (contents.length != 0) {
-        for (i = 0; i < contents[0].values.length; i++) {
-            split = contents[0].values[i][0].split(splitDelim);
-            var xstr2 = [];
-            for (j = 0; j != split.length; j++)
-                xstr2.push(split[j]);
-            rubo.push(xstr2);
-        }
-    }
-    var prefixFound = (split != null);
-    var finalSz = excSz;
-    if (prefixFound) {
-        var xstr3 = [];
-        for (i = 0; i != size; i++)
-            xstr3.push(split[i]);
-        pcubo.push(xstr3);
-        pcubo = pcubo.concat(rubo);
-        finalSz = pcubo.length;
-    }
-    return { pcubo: pcubo, excSz: excSz, prefixFound: prefixFound, finalSz: finalSz };
+    return ime.compoundLookupJS(matchCol, selectCol, key, size, matchDelim, splitDelim, extraGuard, pcubo);
 }
 
 // Shared by selPhone and selChar: for one character/word step of their
@@ -771,7 +731,7 @@ function advanceCompoundWindow(queue, tail, fullchar, matchCol, selectCol, delim
     if (queue != "") {
         var cfullchar = queue + fullchar;
         var csize = cfullchar.split(delim).length;
-        var key = escapeKey ? sqlEscape(cfullchar) : cfullchar;
+        var key = cfullchar; // escapeKey is now vestigial — see compoundLookup
         var r = compoundLookup(matchCol, selectCol, key, csize, delim, splitDelim, guard, cubo);
         cubo = r.pcubo;
         cSz = r.excSz;
@@ -781,7 +741,7 @@ function advanceCompoundWindow(queue, tail, fullchar, matchCol, selectCol, delim
         if (tail != "") {
             var truby = tail + fullchar;
             var tsize = truby.split(delim).length;
-            var tkey = escapeKey ? sqlEscape(truby) : truby;
+            var tkey = truby; // escapeKey is now vestigial — see compoundLookup
             var r2 = compoundLookup(matchCol, selectCol, tkey, tsize, delim, splitDelim, guard, cubo);
             cubo = r2.pcubo;
             if (r2.prefixFound) {
@@ -821,8 +781,12 @@ function advanceCompoundWindow(queue, tail, fullchar, matchCol, selectCol, delim
 // many outputarr entries its previous units occupied with the compound's
 // own unit-count).
 //   fullchar     : lookup key for this unit (already case-folded by caller)
-//   dictSql      : caller-built SQL for the direct dictionary lookup
-//                  (caller is responsible for escaping fullchar within it)
+//   dictResults  : caller-resolved dictionary lookup results, shaped like
+//                  SQL's contents[0].values — [[value, levelMod], ...]
+//                  sorted by levelMod desc (see ime.dictLookupWordJS /
+//                  ime.dictLookupRubyJS in imedata.js). Was a raw SQL
+//                  string the caller built and this function exec'd;
+//                  now the caller resolves it directly.
 //   ext          : whether to append all alternate dictionary matches,
 //                  joined by "/"
 //   fallback     : value to push when neither compound nor dictionary match
@@ -830,19 +794,18 @@ function advanceCompoundWindow(queue, tail, fullchar, matchCol, selectCol, delim
 //                  — same roles as advanceCompoundWindow's params
 // Returns { pconqueue, pcontail } for the caller's next iteration; mutates
 // outputarr in place.
-function resolveUnit(pconqueue, pcontail, fullchar, dictSql, ext, fallback, compoundArgs, outputarr) {
+function resolveUnit(pconqueue, pcontail, fullchar, dictResults, ext, fallback, compoundArgs, outputarr) {
     var step = advanceCompoundWindow(pconqueue, pcontail, fullchar,
         compoundArgs.matchCol, compoundArgs.selectCol, compoundArgs.delim,
         compoundArgs.splitDelim, compoundArgs.guard, compoundArgs.escapeKey);
     var pcubo = step.cubo;
 
     var sss = "";
-    var contents = condb.exec(dictSql);
-    if (contents.length != 0) {
-        sss = contents[0].values[0][0];
+    if (dictResults.length != 0) {
+        sss = dictResults[0][0];
         if (ext) {
-            for (var q = 1; q < contents[0].values.length; q++) {
-                sss = sss + "/" + contents[0].values[q][0];
+            for (var q = 1; q < dictResults.length; q++) {
+                sss = sss + "/" + dictResults[q][0];
             }
         }
     }
@@ -887,10 +850,9 @@ function selPhone(phrase, maxlevel, defa){
             k++;
         }
 
-        var dictSql = "select " + optruby + ", (level % " + maxlevel + ") from " + opttable +
-            " where word='" + sqlEscape(fullchar) + "' order by (level % " + maxlevel + ") desc";
+        var dictResults = ime.dictLookupWordJS(fullchar, maxlevel);
 
-        var step = resolveUnit(pconqueue, pcontail, fullchar, dictSql, ext, "$" + fullchar,
+        var step = resolveUnit(pconqueue, pcontail, fullchar, dictResults, ext, "$" + fullchar,
             { matchCol: "cword", selectCol: "c" + optta, delim: ":", splitDelim: " ", guard: guard, escapeKey: true },
             outputarr);
         pconqueue = step.pconqueue;
@@ -929,10 +891,9 @@ function selChar(phrase, maxlevel, defa) {
         fullcharcase = word[k];
         fullchar = fullcharcase.toLowerCase();
 
-        var dictSql = "select word,(level % " + maxlevel + ") from " + opttable +
-            " where " + optruby + "='" + sqlEscape(fullchar) + "' order by (level % " + maxlevel + ") desc";
+        var dictResults = ime.dictLookupRubyJS(fullchar, maxlevel);
 
-        var step = resolveUnit(pconqueue, pcontail, fullchar, dictSql, ext, fullcharcase,
+        var step = resolveUnit(pconqueue, pcontail, fullchar, dictResults, ext, fullcharcase,
             { matchCol: "c" + optta, selectCol: "cword", delim: " ", splitDelim: ":", guard: "", escapeKey: true },
             outputarr);
         pconqueue = step.pconqueue;
@@ -946,13 +907,9 @@ function selExample(word, ruby) {
     var cubo = [];
     var i;
     var cubostr = "<table>";
-    contents = condb.exec("SELECT cword, c" + opttable + " FROM cmpnom WHERE c" + opttable + " LIKE '" + sqlEscape(ruby) + " %' OR c" + opttable + " LIKE '% " + sqlEscape(ruby) + "' OR c" + opttable + " LIKE '% " + sqlEscape(ruby) + " %' ORDER BY rowid");
-    if (contents.length != 0) {
-        for (i = 0; i < contents[0].values.length; i++) {
-            if (contents[0].values[i][0].indexOf(word) > -1) {
-                cubostr += "<tr><td>" + contents[0].values[i][0].replace(/:/g, "") + "</td><td>" + contents[0].values[i][1] + "</td></tr>";
-            }
-        }
+    var examplePairs = ime.selExampleLookupJS(word, ruby);
+    for (i = 0; i < examplePairs.length; i++) {
+        cubostr += "<tr><td>" + examplePairs[i][0].replace(/:/g, "") + "</td><td>" + examplePairs[i][1] + "</td></tr>";
     }
     cubostr += "</table>";
     $id("example").innerHTML = cubostr;
