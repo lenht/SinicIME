@@ -1032,10 +1032,31 @@ function typeChar(text, ch) {
     return text + ch;
 }
 
+// Attempts to apply the mcTELEX modifier `ch` to the character at `idx`
+// in `a`. Returns the resulting string if a change was made — either a
+// deletion (mcTELEX signals removal with an empty-string result) or a
+// diacritic substitution, with the shared `oo` side-effect flag honored
+// only when `checkOo` is true, matching each call site's original
+// behavior. Returns null if the character at `idx` was unaffected by
+// `ch`, so the caller can fall through to the next candidate position.
+function applyTelexAt(a, idx, ch, checkOo) {
+    var nc = mcTELEX(a[idx], ch);
+    if (nc == "")
+        return a.substring(0, idx) + a.substring(idx + 1);
+    if (a[idx] != nc) {
+        var result = a.substring(0, idx) + nc + a.substring(idx + 1);
+        if (checkOo && oo) {
+            oo = false;
+            return result + 'o';
+        }
+        return result;
+    }
+    return null;
+}
+
 function TELEX(text, ch) {
     if (text.length == 0)
         return text + ch;
-    var nc;
     var qu = -1;
     var gi = -1;
     var a = text;
@@ -1082,38 +1103,22 @@ function TELEX(text, ch) {
             case 'i':
                 if ((qu == 1) && (gi == -1) && (a[l - 1] == 'u'))
                     break;
-				nc = mcTELEX(a[l - 1], ch);
-				if (nc=="")
-					return a.substring(0, l - 1) + a.substring(l);
-                if (a[l - 1] != nc) {
-                    a = a.substring(0, l - 1) + nc + a.substring(l);
-                    return a;
-                }
+                var direct = applyTelexAt(a, l - 1, ch, false);
+                if (direct !== null)
+                    return direct;
                 break;
         }
     }
     var i;
-    for (i=l; i!=qu; i--) {
-            nc = mcTELEX(a[i], ch);
-			if (nc=="")
-				return a.substring(0, i) + a.substring(i + 1);
-            if (a[i]!=nc) {
-                a = a.substring(0, i) + nc + a.substring(i + 1);
-                if (oo) {
-                    oo = false;
-                    return (a + 'o');
-                }
-                return a;
-            }
+    for (i = l; i != qu; i--) {
+        var stepped = applyTelexAt(a, i, ch, true);
+        if (stepped !== null)
+            return stepped;
     }
     if (qu == 1) {
-        nc = mcTELEX(a[1], ch);
-		if (nc=="")
-			return a.substring(0, 1) + a.substring(1 + 1);
-        if (a[1] != nc) {
-            a = a.substring(0, 1) + nc + a.substring(1 + 1);
-            return a;
-        }
+        var tail = applyTelexAt(a, 1, ch, false);
+        if (tail !== null)
+            return tail;
     }
     return text + ch;
 }
