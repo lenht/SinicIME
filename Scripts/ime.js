@@ -23,16 +23,31 @@ var kblist = ["E→文", "E→P", "P→文"];
 var keyboard = 0;
 var contents = [];
 var condb;
-var conlenbuf = 0;
-var conlentmp = 0;
-var conlentail = 0;
-var concSz = 0;
-var conqSz = 0;
-var conrSz = 0;
-var contqSz = 0;
-var contrSz = 0;
-var contail = "";
-var conqueue = "";
+
+// Composition-state cluster: transient state tracking the in-progress
+// compound-word search across keystrokes while the user is composing a
+// candidate. Read/written across resetComposition, txtPadKeyTyped,
+// txtPadKeyInput, putWord, upPage/dnPage, addSelCompound, and delList.
+// queue/tail form a two-slot accumulator of already-matched compound text;
+// cSz/qSz/rSz/tqSz/trSz are an ascending threshold ladder (cSz <= qSz <=
+// rSz <= tqSz <= trSz) that the SPACE-key handlers walk to decide, based on
+// which candidate slot the user picked, whether to keep accumulating,
+// reset, or roll over into the secondary "tail" compound match. lenTmp is
+// staged by the SPACE handlers from the just-selected candidate's length,
+// then consumed into lenBuf by addSelCompound() on the next keystroke.
+// See OPEN_ITEMS_REVIEW.md for the audit that identified this cluster.
+var conState = {
+    queue: "",      // was conqueue
+    tail: "",       // was contail
+    lenBuf: 0,      // was conlenbuf
+    lenTmp: 0,      // was conlentmp
+    lenTail: 0,     // was conlentail
+    cSz: 0,         // was concSz
+    qSz: 0,         // was conqSz
+    rSz: 0,         // was conrSz
+    tqSz: 0,        // was contqSz
+    trSz: 0         // was contrSz
+};
 var curtxtPadlength = 0; // tracks txtPad length between keystrokes for touch-input diffing (see txtPadKeyInput)
 
 var lentype = 0;
@@ -92,8 +107,8 @@ function optkeyboard(kbsel) {
 // candidate list). Shared by the CTRL/ESC handler, the arrow-key-with-no-
 // candidates handler, and the touch-input max-length handler.
 function resetComposition() {
-    contail = conqueue = "";
-    conlenbuf = 0;
+    conState.tail = conState.queue = "";
+    conState.lenBuf = 0;
     delList();
     $id("rubytype").innerHTML = "";
     lentype = 0;
@@ -206,16 +221,16 @@ function txtPadKeyTyped(evt) {
     if ((optionlist.length != 0) && !isNaN(parseInt(tonechar)) && (evtC != tonechar)) {   //SHIFT + Num
         var selnum = parseInt(tonechar);
         evt.preventDefault();
-        conqueue = contail = "";
+        conState.queue = conState.tail = "";
         if (selnum == 0) {
             putWord(rubystr);
             return;
         }
         if (optionlist.length >= selnum) {
-            if ((selnum > conrSz) && (selnum <= contrSz))
-                conlenbuf = conlentail;
-            if (selnum > contrSz)
-                conlenbuf = 0;
+            if ((selnum > conState.rSz) && (selnum <= conState.trSz))
+                conState.lenBuf = conState.lenTail;
+            if (selnum > conState.trSz)
+                conState.lenBuf = 0;
             putWord($id("w" + selnum).textContent);
         } else {
             var txtarea = txtPadEl.value;
@@ -226,54 +241,54 @@ function txtPadKeyTyped(evt) {
             lentype = 0;
             delList();
         }
-        conqueue = contail = "";
-        conlenbuf = 0;
+        conState.queue = conState.tail = "";
+        conState.lenBuf = 0;
         return;
     } else if (evtK == 32) {    //SPACE
         if (optionlist.length == 1) {
             rubytypeEl.innerHTML = rubystr + " ";
             listUpdate();
         }
-        if (ind < concSz) {
-            if (concSz == conqSz)
-                conqueue = "";
+        if (ind < conState.cSz) {
+            if (conState.cSz == conState.qSz)
+                conState.queue = "";
             else
-                conqueue = conqueue + rubystr + " ";
-            contail = "";
-        } else if (ind < conqSz) {
-            conqueue = conqueue + rubystr + " ";
-            contail = rubystr + " ";
-        } else if (ind < conrSz)
-            conqueue = contail = "";
-        else if (ind < contqSz) {
-            conlenbuf = conlentail;
-            conqueue = contail + rubystr + " ";
-            contail = rubystr + " ";
-        } else if (ind < contrSz) {
-            conlenbuf = conlentail;
-            conqueue = contail = "";
+                conState.queue = conState.queue + rubystr + " ";
+            conState.tail = "";
+        } else if (ind < conState.qSz) {
+            conState.queue = conState.queue + rubystr + " ";
+            conState.tail = rubystr + " ";
+        } else if (ind < conState.rSz)
+            conState.queue = conState.tail = "";
+        else if (ind < conState.tqSz) {
+            conState.lenBuf = conState.lenTail;
+            conState.queue = conState.tail + rubystr + " ";
+            conState.tail = rubystr + " ";
+        } else if (ind < conState.trSz) {
+            conState.lenBuf = conState.lenTail;
+            conState.queue = conState.tail = "";
         } else {
-            conqueue = rubystr + " ";
-            contail = "";
-            conlenbuf = 0;
+            conState.queue = rubystr + " ";
+            conState.tail = "";
+            conState.lenBuf = 0;
         }
         if (optionlist.length != 0) {
             evt.preventDefault();
-            conlentmp = $id("w" + selectedindex).textContent.length;
+            conState.lenTmp = $id("w" + selectedindex).textContent.length;
             putWord($id("w" + selectedindex).textContent);
         }
         txtPadEl.focus();
         return;
     } else if (((evtK > 31) && (evtK < 39)) || ((evtK > 39) && (evtK < 48)) || ((evtK > 57) && (evtK < 65)) || ((evtK > 90) && (evtK < 96)) || ((evtK > 122) && (evtK < 127))) {    //Punctuation
-        if ((ind >= conrSz) && (ind < contrSz))
-            conlenbuf = conlentail;
-        if (ind >= contrSz)
-            conlenbuf = 0;
+        if ((ind >= conState.rSz) && (ind < conState.trSz))
+            conState.lenBuf = conState.lenTail;
+        if (ind >= conState.trSz)
+            conState.lenBuf = 0;
         if (optionlist.length != 0) {
             putWord($id("w" + selectedindex).textContent);
         }
-        conqueue = contail = "";
-        conlenbuf = 0;
+        conState.queue = conState.tail = "";
+        conState.lenBuf = 0;
         lentype = 0;
         lentype++;
         rubytypeEl.innerHTML = typeChar(rubytypeEl.textContent, evtC);
@@ -376,10 +391,39 @@ function txtPadKeyInput(evt) {
         if (evtC == ' ') {
             txtPadEl.value = txtPadEl.value.substring(0, curcaret - 1) + txtPadEl.value.substring(curcaret, txtPadEl.value.length);
             txtPadEl.selectionStart = txtPadEl.selectionEnd = curcaret - 1;
+            // Composition-state threshold ladder — mirrors txtPadKeyTyped's
+            // SPACE handler. Without this, conState.queue never becomes
+            // non-empty on the touch path, so addSelCompound()'s
+            // "if (conState.queue == '') return;" guard always fires and
+            // compound-word search silently never runs on touch input. See
+            // OPEN_ITEMS_REVIEW.md, "txtPadKeyInput ladder gap".
+            if (ind < conState.cSz) {
+                if (conState.cSz == conState.qSz)
+                    conState.queue = "";
+                else
+                    conState.queue = conState.queue + rubystr + " ";
+                conState.tail = "";
+            } else if (ind < conState.qSz) {
+                conState.queue = conState.queue + rubystr + " ";
+                conState.tail = rubystr + " ";
+            } else if (ind < conState.rSz)
+                conState.queue = conState.tail = "";
+            else if (ind < conState.tqSz) {
+                conState.lenBuf = conState.lenTail;
+                conState.queue = conState.tail + rubystr + " ";
+                conState.tail = rubystr + " ";
+            } else if (ind < conState.trSz) {
+                conState.lenBuf = conState.lenTail;
+                conState.queue = conState.tail = "";
+            } else {
+                conState.queue = rubystr + " ";
+                conState.tail = "";
+                conState.lenBuf = 0;
+            }
             if (optionlist.length != 0) {
                 evt.preventDefault();
                 var wordEl = $id("w" + selectedindex);
-                conlentmp = wordEl.textContent.length;
+                conState.lenTmp = wordEl.textContent.length;
                 putWord(wordEl.textContent);
             }
             curtxtPadlength = txtPadEl.value.length;
@@ -391,16 +435,16 @@ function txtPadKeyInput(evt) {
         else if ((evtC == '.') || (evtC == ',')) {
             txtPadEl.value = txtPadEl.value.substring(0, curcaret - 1) + evtC + txtPadEl.value.substring(curcaret, txtPadEl.value.length);
             txtPadEl.selectionStart = txtPadEl.selectionEnd = curcaret - 1;
-            if ((ind >= conrSz) && (ind < contrSz))
-                conlenbuf = conlentail;
-            if (ind >= contrSz)
-                conlenbuf = 0;
+            if ((ind >= conState.rSz) && (ind < conState.trSz))
+                conState.lenBuf = conState.lenTail;
+            if (ind >= conState.trSz)
+                conState.lenBuf = 0;
             if (optionlist.length != 0) {
                 putWord($id("w" + selectedindex).textContent);
             }
-            conqueue = "";
-            contail = "";
-            conlenbuf = 0;
+            conState.queue = "";
+            conState.tail = "";
+            conState.lenBuf = 0;
             lentype = 0;
             txtPadEl.selectionStart = txtPadEl.selectionEnd = txtPadEl.selectionEnd + 1;
             lentype++;
@@ -422,11 +466,11 @@ function txtPadKeyInput(evt) {
 function putWord(instr) {
     var txtPadEl = $id("txtPad");
     var txtarea = txtPadEl.value;
-    txtPadEl.selectionStart = txtPadEl.selectionEnd - lentype - conlenbuf;
+    txtPadEl.selectionStart = txtPadEl.selectionEnd - lentype - conState.lenBuf;
     var caretbeg = txtPadEl.selectionStart;
     var caretend = txtPadEl.selectionEnd;
     txtPadEl.value = txtarea.substring(0, caretbeg) + instr + txtarea.substring(caretend, txtarea.length);
-    conlenbuf = 0;
+    conState.lenBuf = 0;
     txtPadEl.selectionStart = txtPadEl.selectionEnd = caretbeg + instr.length;
     $id("rubytype").innerHTML = "";
     lentype = 0;
@@ -436,11 +480,11 @@ function putWord(instr) {
 function upPage() {
     pgEn = pgBe;
     pgBe -= 9;
-    conqSz += 9;
-    concSz += 9;
-    conrSz += 9;
-    contqSz += 9;
-    contrSz += 9;
+    conState.qSz += 9;
+    conState.cSz += 9;
+    conState.rSz += 9;
+    conState.tqSz += 9;
+    conState.trSz += 9;
     bPgdn = true;
     if (pgBe == 0) {
         bPgup = false;
@@ -455,11 +499,11 @@ function upPage() {
 
 function dnPage() {
     pgBe += 9;
-    conqSz -= 9;
-    concSz -= 9;
-    conrSz -= 9;
-    contqSz -= 9;
-    contrSz -= 9;
+    conState.qSz -= 9;
+    conState.cSz -= 9;
+    conState.rSz -= 9;
+    conState.tqSz -= 9;
+    conState.trSz -= 9;
     bPgup = true;
     var optionsublist;
     var i;
@@ -537,34 +581,34 @@ function addSelRuby(ruby) {
 
 //Parse selCompound results from db to optionlist
 function addSelCompound(ruby) {
-    if ((conqueue == "") || (keyboard == 1))
+    if ((conState.queue == "") || (keyboard == 1))
         return;
     var optta = opttable;
-    var cruby = conqueue + ruby;
+    var cruby = conState.queue + ruby;
     var csize = cruby.split(" ").length;
     var rawcubo = [];
 
     var r = compoundLookup("c" + optta, "cword", sqlEscape(cruby), csize, " ", ":", "", rawcubo);
     rawcubo = r.pcubo;
-    concSz = r.excSz;
-    conqSz = r.excSz + (r.prefixFound ? 1 : 0);
-    conrSz = r.prefixFound ? r.finalSz : r.excSz;
+    conState.cSz = r.excSz;
+    conState.qSz = r.excSz + (r.prefixFound ? 1 : 0);
+    conState.rSz = r.prefixFound ? r.finalSz : r.excSz;
     if ((r.excSz > 0) || r.prefixFound)
-        conlenbuf = conlentmp;
+        conState.lenBuf = conState.lenTmp;
     if (r.prefixFound)
-        conlentail = rawcubo[r.excSz][csize - 1].length;
+        conState.lenTail = rawcubo[r.excSz][csize - 1].length;
 
-    if (contail != "") {
-        var truby = contail + ruby;
+    if (conState.tail != "") {
+        var truby = conState.tail + ruby;
         var tsize = truby.split(" ").length;
         var r2 = compoundLookup("c" + optta, "cword", sqlEscape(truby), tsize, " ", ":", "", rawcubo);
         rawcubo = r2.pcubo;
         if ((r2.excSz > 0) || r2.prefixFound)
-            conlenbuf = conlentmp;
+            conState.lenBuf = conState.lenTmp;
         if (r2.prefixFound) {
-            contqSz++;
-            contrSz = r2.finalSz;
-            conlentail = rawcubo[r2.excSz][tsize - 1].length;
+            conState.tqSz++;
+            conState.trSz = r2.finalSz;
+            conState.lenTail = rawcubo[r2.excSz][tsize - 1].length;
         }
     }
 
@@ -942,7 +986,7 @@ function listUpdate() {
 
 function delList() {
     optionlist = [];
-    conqSz = conrSz = concSz = contqSz = contrSz = 0;
+    conState.qSz = conState.rSz = conState.cSz = conState.tqSz = conState.trSz = 0;
     selectedindex = 0;
     pgBe = 0;
     pgEn = 0;
