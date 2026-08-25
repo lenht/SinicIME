@@ -106,9 +106,25 @@
         return node;
     }
 
-    function buildIndex(data) {
-        var rubynom = data.rubynom; // [word, ruby, level][]
-        var cmpnom = data.cmpnom;   // [cword, crubynom][]
+    // Accepts rows exported in either shape:
+    //   readable: {word, ruby, level} / {cword, crubynom}
+    //   compact:  [word, ruby, level] / [cword, crubynom]
+    // and normalizes to the array form every function below expects, so
+    // export_imenom_json.py's two output modes (default human-readable,
+    // --compact for deployment) are both drop-in compatible here.
+    function normalize(data) {
+        function row3(r) { return Array.isArray(r) ? r : [r.word, r.ruby, r.level]; }
+        function row2(r) { return Array.isArray(r) ? r : [r.cword, r.crubynom]; }
+        return {
+            rubynom: data.rubynom.map(row3),
+            cmpnom: data.cmpnom.map(row2)
+        };
+    }
+
+    function buildIndex(rawData) {
+        var normalized = normalize(rawData);
+        var rubynom = normalized.rubynom; // [word, ruby, level][]
+        var cmpnom = normalized.cmpnom;   // [cword, crubynom][]
 
         var rubyToWordLevel = new Map();
         for (var i = 0; i < rubynom.length; i++) {
@@ -319,7 +335,7 @@
         };
     }
 
-    var api = { init: init, buildIndex: buildIndex, prefixTrieGet: prefixTrieGet, asciiFold: asciiFold };
+    var api = { init: init, buildIndex: buildIndex, normalize: normalize, prefixTrieGet: prefixTrieGet, asciiFold: asciiFold };
 
     if (typeof module !== 'undefined' && module.exports) {
         module.exports = api; // Node (regression harness)
