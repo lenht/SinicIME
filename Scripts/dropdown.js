@@ -1,39 +1,50 @@
 /*!
- * Minimal dropdown toggle — replaces Bootstrap 3's dropdown.js plugin.
- * This site only uses the `data-toggle="dropdown"` component from
- * bootstrap.js (no modal, tab, carousel, tooltip, popover, collapse,
- * scrollspy, affix, alert, or button plugins), so this ~30-line vanilla
- * implementation replaces the full 60KB bootstrap.js bundle.
+ * Minimal menu toggle — the site's only dropdown is the input-mode picker
+ * in the header. This ~40-line vanilla implementation replaces what used
+ * to be Bootstrap 3's dropdown.js plugin (see git history); it was already
+ * a custom replacement, this pass just renames the Bootstrap-era class
+ * names (.dropup/.dropdown/.dropdown-menu/data-toggle="dropdown") to a
+ * plain, self-descriptive .menu system, and adds the two accessibility
+ * hooks the old version was missing: aria-expanded on the trigger, and
+ * focus returning to the trigger on Escape.
  *
- * Behavior matches Bootstrap 3's dropdown.js for this markup pattern:
- *   <li class="dropup"> (or .dropdown)
- *     <a class="dropdown-toggle" data-toggle="dropdown">...</a>
- *     <ul class="dropdown-menu">...</ul>
- *   </li>
- * Clicking the toggle opens/closes its menu by toggling `.open` on the
- * parent element; clicking anywhere else closes any open menu.
+ * Markup contract:
+ *   <div class="menu">
+ *     <button class="menu-toggle" data-toggle="menu" aria-expanded="false">...</button>
+ *     <ul class="menu-panel">...</ul>
+ *   </div>
+ * Clicking the toggle opens/closes its panel by toggling `.is-open` on the
+ * parent `.menu`; clicking anywhere else, or Escape, closes any open menu.
+ * The toggle is a real <button>, so Enter/Space activation is native and
+ * needs no extra keydown handling here.
  */
 (function () {
     "use strict";
 
-    function closeAllDropdowns(except) {
-        document.querySelectorAll(".dropup.open, .dropdown.open").forEach(function (el) {
+    function setExpanded(toggle, expanded) {
+        if (toggle) toggle.setAttribute("aria-expanded", expanded ? "true" : "false");
+    }
+
+    function closeAllMenus(except) {
+        document.querySelectorAll(".menu.is-open").forEach(function (el) {
             if (el !== except) {
-                el.classList.remove("open");
+                el.classList.remove("is-open");
+                setExpanded(el.querySelector('[data-toggle="menu"]'), false);
             }
         });
     }
 
     document.addEventListener("click", function (evt) {
-        var toggle = evt.target.closest('[data-toggle="dropdown"]');
+        var toggle = evt.target.closest('[data-toggle="menu"]');
 
         if (toggle) {
-            var parent = toggle.closest(".dropup, .dropdown");
+            var parent = toggle.closest(".menu");
             if (!parent) return;
 
-            var isOpen = parent.classList.contains("open");
-            closeAllDropdowns(parent);
-            parent.classList.toggle("open", !isOpen);
+            var isOpen = parent.classList.contains("is-open");
+            closeAllMenus(parent);
+            parent.classList.toggle("is-open", !isOpen);
+            setExpanded(toggle, !isOpen);
 
             evt.preventDefault();
             evt.stopPropagation();
@@ -41,15 +52,17 @@
         }
 
         // Click outside any toggle: close open menus (unless the click
-        // was inside the open menu itself, e.g. selecting an item).
-        if (!evt.target.closest(".dropdown-menu")) {
-            closeAllDropdowns();
+        // was inside the open panel itself, e.g. selecting an item).
+        if (!evt.target.closest(".menu-panel")) {
+            closeAllMenus();
         }
     });
 
     document.addEventListener("keydown", function (evt) {
         if (evt.key === "Escape") {
-            closeAllDropdowns();
+            var openToggle = document.querySelector('.menu.is-open [data-toggle="menu"]');
+            closeAllMenus();
+            if (openToggle) openToggle.focus();
         }
     });
 })();

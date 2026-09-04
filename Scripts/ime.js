@@ -620,9 +620,8 @@ function convertpad(direction, maxlevel) {
     }
     if (convtxt.length > 0) {
         var txtPadoutEl = $id("txtPadout");
-        $css(txtPadEl, { 'width': '50%' });
         $css(txtPadoutEl, { 'writing-mode': 'horizontal-tb' });
-        $css(txtPadoutEl, { 'display': 'block' });
+        $css($id("output-panel"), { 'display': 'block' });
         txtPadoutEl.innerHTML = convtxt.replace(/\n/g, " <br> ");
 		$css($id("copy_button"), { 'display': 'block' });
     } else {
@@ -631,17 +630,10 @@ function convertpad(direction, maxlevel) {
 }
 
 
-function focuspad() {
-    if ($id("txtPadout").innerHTML == "") {
-        offpad();
-    }
-}
-
 function offpad() {
-        $css($id("txtPadout"), { 'display': 'none' });
+        $css($id("output-panel"), { 'display': 'none' });
         $css($id("txtPadout"), { 'writing-mode': 'horizontal-tb' });
 		$css($id("copy_button"), { 'display': 'none' });
-        $css($id("txtPad"), { 'width': '100%' });
 }
 function logo2phon(pad, maxlevel) {
     if (pad == "")
@@ -953,8 +945,13 @@ function delList() {
 }
 
 // Resets every candidate option (.outopt) to its unselected appearance.
+// Styling itself lives entirely in styles.css (.outopt / .outopt.is-selected)
+// so there is exactly one place the palette is defined.
 function clearHighlight() {
-    document.querySelectorAll(".outopt").forEach(function(el) { $css(el, { 'background': 'none', 'color': '#f0e0c0' }); });
+    document.querySelectorAll(".outopt").forEach(function(el) {
+        el.classList.remove("is-selected");
+        el.setAttribute("aria-selected", "false");
+    });
 }
 
 function whitelist() {
@@ -968,7 +965,9 @@ function setSelectedIndex(ind) {
     if ($id("w" + ind).textContent != "") {
         selectedindex = ind;
         clearHighlight();
-        $css($id("w" + ind), { 'background': '#eee', 'color': '#000' });
+        var el = $id("w" + ind);
+        el.classList.add("is-selected");
+        el.setAttribute("aria-selected", "true");
     }
     $id("txtPad").focus();
 }
@@ -1131,6 +1130,11 @@ function mcTELEX(c, m) {
     }
 }
 
+var shareResetTimer = null;
 function share() {
   navigator.clipboard.writeText($id("txtPadout").innerHTML.replace(/ <br> /g, "\n"));
+  var btn = $id("copy_button");
+  btn.classList.add("is-copied");
+  if (shareResetTimer) window.clearTimeout(shareResetTimer);
+  shareResetTimer = window.setTimeout(function () { btn.classList.remove("is-copied"); }, 1500);
 }

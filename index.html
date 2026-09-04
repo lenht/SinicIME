@@ -3,8 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sinogram IME - Linguaevum</title>
-<link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
+<title>Linguaevum — Sinogram IME for Vietnamese Hán Nôm</title>
+<meta name="description" content="Type Vietnamese Quốc Ngữ and convert it to Hán Nôm (chữ Nôm) Sinographs, or the reverse, with a compound-aware dictionary of 48,000+ words.">
+<link rel="icon" type="image/svg+xml" href="./favicon.svg">
 <link href="./css/styles.css" rel="stylesheet">
 
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-T99S46KJ26"></script>
@@ -17,92 +18,94 @@
 </head>
 <body>
 
-<input type="hidden" id="DictGuide" value="Press SHIFT">
+<a class="skip-link" href="#txtPad">Skip to composition field</a>
 
-<div id="waitscreen"></div>
+<input type="hidden" id="DictGuide" value="Hold Shift to see an example">
 
-<div class="navbar navbar-inverse navbar-fixed-top">
-    <div class="container">
-        <div class="navbar-header">
-            <img src="./Resources/tho.png" class="logo">
-            <a class="navbar-brand" href="./">Linguaevum</a>
-        </div>
-    </div>
+<div id="waitscreen" class="waitscreen" role="status" aria-live="polite">
+  <div class="waitscreen__spinner" aria-hidden="true">
+    <img src="./favicon.svg" alt="" class="waitscreen__mark">
+  </div>
+  <p class="waitscreen__text">Loading the Sino-Nôm dictionary…</p>
 </div>
 
-<div class="jumbotron">
-    <table class="jumbotron-layout-table">
-        <tr>
-            <td class="jumbotron-main-cell">
-                <textarea id="txtPad" onclick="offpad()"></textarea>
-                <div id="txtPadout" onchange="focuspad()" onfocus="focuspad()"></div>
-                <button id="copy_button" onclick="share()">Copy</button>
-            </td>
-            <td class="jumbotron-side-cell">
-                <table id="outlist">
-                    <tr>
-                        <td></td>
-                        <td><div id="rubytype"></div></td>
-                    </tr>
-                    <tr><td>1</td><td id="w1" class="outopt" onclick="setSelectedIndex(1)"></td></tr>
-                    <tr><td>2</td><td id="w2" class="outopt" onclick="setSelectedIndex(2)"></td></tr>
-                    <tr><td>3</td><td id="w3" class="outopt" onclick="setSelectedIndex(3)"></td></tr>
-                    <tr><td>4</td><td id="w4" class="outopt" onclick="setSelectedIndex(4)"></td></tr>
-                    <tr><td>5</td><td id="w5" class="outopt" onclick="setSelectedIndex(5)"></td></tr>
-                    <tr><td>6</td><td id="w6" class="outopt" onclick="setSelectedIndex(6)"></td></tr>
-                    <tr><td>7</td><td id="w7" class="outopt" onclick="setSelectedIndex(7)"></td></tr>
-                    <tr><td>8</td><td id="w8" class="outopt" onclick="setSelectedIndex(8)"></td></tr>
-                    <tr><td>9</td><td id="w9" class="outopt" onclick="setSelectedIndex(9)"></td></tr>
-                </table>
-                <table class="pager">
-                    <tr>
-                        <td onclick="leftopt()">&lt;</td>
-                        <td></td>
-                        <td onclick="rightopt()">&gt;</td>
-                    </tr>
-                </table>
-                <div id="example" class="scrollable-menu"></div>
-            </td>
-        </tr>
-    </table>
-</div>
+<header class="site-header">
+  <div class="site-header__inner">
+    <a class="brand" href="./">
+      <img src="./favicon.svg" alt="" class="brand-mark" width="28" height="28">
+      <span class="brand-name">Linguaevum</span>
+    </a>
 
-<nav class="navbar navbar-inverse wave-nav">
-    <div class="container-fluid">
-        <div class="navbar-header navbar-header-left">
-            <ul class="nav navbar-nav navbar-left">
-                <li class="dropup">
-                    <a class="dropdown-toggle" data-toggle="dropdown">
-                        <span id="kbname">E→文</span>
-                        <span class="caret"></span>
-                    </a>
-                    <ul class="dropdown-menu">
-                        <li id="kb0" onclick="optkeyboard(0)"><a>QWERTY→Sinograms</a></li>
-                        <li id="kb1" onclick="optkeyboard(1)"><a>QWERTY→Phonograms</a></li>
-                        <li id="kb2" onclick="optkeyboard(2)"><a>Phonograms→Sinograms</a></li>
-                    </ul>
-                </li>
-            </ul>
-        </div>
-        <div class="navbar-header navbar-header-right">
-            <ul class="nav navbar-nav navbar-right">
-                <li class="convert-item">
-                    <a class="convert-link" onclick="convertpad(1,20)" title="Convert romanized Quốc Ngữ text to Hán Nôm characters">Quốc Ngữ → Nôm</a>
-                </li>
-                <li class="convert-item">
-                    <a class="convert-link" onclick="convertpad(0,20)" title="Convert Hán Nôm characters to romanized Quốc Ngữ text">Nôm → Quốc Ngữ</a>
-                </li>
-            </ul>
-        </div>
+    <div class="toolbar">
+      <div class="menu" id="mode-menu">
+        <button type="button" class="menu-toggle" data-toggle="menu" aria-haspopup="true" aria-expanded="false" aria-controls="mode-menu-panel">
+          <span id="kbname">E→文</span>
+          <svg class="menu-caret" viewBox="0 0 12 8" width="10" height="7" aria-hidden="true">
+            <path d="M1 1l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <ul class="menu-panel" id="mode-menu-panel">
+          <li><button type="button" id="kb0" class="menu-item" onclick="optkeyboard(0)">QWERTY → Sinograms</button></li>
+          <li><button type="button" id="kb1" class="menu-item" onclick="optkeyboard(1)">QWERTY → Phonograms</button></li>
+          <li><button type="button" id="kb2" class="menu-item" onclick="optkeyboard(2)">Phonograms → Sinograms</button></li>
+        </ul>
+      </div>
+
+      <div class="convert-group" role="group" aria-label="Convert direction">
+        <button type="button" class="convert-btn" onclick="convertpad(1,20)" title="Convert romanized Quốc Ngữ text to Hán Nôm characters">Quốc Ngữ → Nôm</button>
+        <button type="button" class="convert-btn" onclick="convertpad(0,20)" title="Convert Hán Nôm characters to romanized Quốc Ngữ text">Nôm → Quốc Ngữ</button>
+      </div>
     </div>
-</nav>
+  </div>
+</header>
 
-<footer>
-    <br><p class="footer-line">Author: Sky Darmos</p>
-    <p class="footer-line">Programmers: Trần Thanh Trúc (陳青竹) & Nguyễn Việt Khôi (阮越魁)</p>
-    <p class="footer-line">Etymology consultant: Nguyễn Việt Khôi (阮越魁)</p><br>
-    <p class="footer-line">© 2024 - 2026 - Sky Darmos - Vietnamese Etymography (chữ Nôm)</p>
-    <p class="footer-line">Features more than 48,000 Vietnamese single and compound words. </p>
+<main class="workbench">
+  <section class="input-pane" aria-label="Text composition">
+    <label for="txtPad" class="visually-hidden">Compose text</label>
+    <textarea id="txtPad" class="pad" onclick="offpad()" spellcheck="false" autocomplete="off" autocapitalize="off"></textarea>
+
+    <div id="output-panel" class="output-panel">
+      <div id="txtPadout" class="pad" role="status" aria-live="polite" aria-label="Converted text"></div>
+      <button type="button" id="copy_button" class="copy-btn" onclick="share()">
+        <span class="copy-btn__label">Copy</span>
+        <span class="copy-btn__label copy-btn__label--copied">Copied</span>
+      </button>
+    </div>
+  </section>
+
+  <aside class="side-rail" aria-label="Candidates">
+    <div id="rubytype" class="composition"></div>
+
+    <div id="outlist" class="candidate-list" aria-label="Character candidates">
+      <button type="button" class="outopt" id="w1" onclick="setSelectedIndex(1)" aria-selected="false"></button>
+      <button type="button" class="outopt" id="w2" onclick="setSelectedIndex(2)" aria-selected="false"></button>
+      <button type="button" class="outopt" id="w3" onclick="setSelectedIndex(3)" aria-selected="false"></button>
+      <button type="button" class="outopt" id="w4" onclick="setSelectedIndex(4)" aria-selected="false"></button>
+      <button type="button" class="outopt" id="w5" onclick="setSelectedIndex(5)" aria-selected="false"></button>
+      <button type="button" class="outopt" id="w6" onclick="setSelectedIndex(6)" aria-selected="false"></button>
+      <button type="button" class="outopt" id="w7" onclick="setSelectedIndex(7)" aria-selected="false"></button>
+      <button type="button" class="outopt" id="w8" onclick="setSelectedIndex(8)" aria-selected="false"></button>
+      <button type="button" class="outopt" id="w9" onclick="setSelectedIndex(9)" aria-selected="false"></button>
+    </div>
+
+    <div class="pager" role="group" aria-label="More candidates">
+      <button type="button" class="pager-btn" onclick="leftopt()" aria-label="Previous candidates">‹</button>
+      <button type="button" class="pager-btn" onclick="rightopt()" aria-label="Next candidates">›</button>
+    </div>
+
+    <div id="example" class="examples scrollable-menu"></div>
+  </aside>
+</main>
+
+<footer class="site-footer">
+  <p class="site-footer__credits">
+    <span>Author: Sky Darmos</span>
+    <span class="dot" aria-hidden="true">·</span>
+    <span>Programmers: Trần Thanh Trúc (陳青竹) &amp; Nguyễn Việt Khôi (阮越魁)</span>
+    <span class="dot" aria-hidden="true">·</span>
+    <span>Etymology consultant: Nguyễn Việt Khôi (阮越魁)</span>
+  </p>
+  <p class="site-footer__meta">© 2024–2026 Sky Darmos — Vietnamese Etymography (chữ Nôm) · 48,000+ Vietnamese single and compound words</p>
 </footer>
 
 <script src="./Scripts/imedata.js"></script>
