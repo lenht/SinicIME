@@ -423,6 +423,15 @@ button:focus-visible,
   display: flex;
   align-items: stretch;
   gap: 16px;
+  /* Explicit height lives here (not on .pad) so both #txtPad and
+     .output-panel resolve against the same definite container height.
+     Previously this was set directly on .pad, but #txtPadout's ID rule
+     (height: 100%) needs a definite containing-block height to resolve
+     against — .output-panel had none, so it sized to its converted-text
+     content instead, and #txtPad (which had its own explicit height)
+     didn't stretch to match. See REDESIGN_NOTES.md-adjacent chat log for
+     the walkthrough if this needs revisiting. */
+  height: calc(100dvh - var(--header-h) - 88px);
 }
 
 .pad {
@@ -439,7 +448,7 @@ button:focus-visible,
   font-size: clamp(16px, 1.3vw, 20px);
   line-height: 1.6;
   resize: none;
-  height: calc(100dvh - var(--header-h) - 88px);
+  height: 100%;
 }
 
 #txtPad { outline: none; }
@@ -462,7 +471,6 @@ button:focus-visible,
 #txtPadout {
   height: 100%;
   overflow: auto;
-  padding-top: 58px;
 }
 
 .copy-btn {
@@ -477,6 +485,12 @@ button:focus-visible,
   color: var(--color-bg);
   font-weight: 600;
   font-size: .82rem;
+  /* Sits on top of the output text's corner rather than reserving space
+     for itself via padding on #txtPadout — that padding used to push the
+     output text down below where #txtPad's text starts, misaligning the
+     two panes. A backdrop blur keeps the button legible over text. */
+  backdrop-filter: blur(4px);
+  box-shadow: 0 4px 14px -6px color-mix(in srgb, var(--charcoal) 70%, transparent);
 }
 
 .copy-btn__label--copied { display: none; }
