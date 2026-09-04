@@ -1,63 +1,52 @@
 /* ==========================================================================
    Linguaevum — Sinogram IME
-   Ground-up stylesheet. Replaces the Bootstrap 3 reset/grid/navbar system
-   entirely (nothing in index.html uses .navbar/.nav/.dropdown/.container/
-   .caret/etc. any more, so none of that is ported forward) and drops every
-   raster image the old theme depended on (loading.gif, favicon.ico,
-   tho.png, wave.png, dragonly.png) in favor of an inline SVG seal mark, a
-   CSS spinner, and gradient/solid fills built from the palette below.
+   Skin: "ink on paper" — a chop-stamp / manuscript reading built from
+   exactly four colors, each doing one job:
 
-   Design tokens
-   -------------
-   Palette (5 given colors) -> role:
-     --oyster   Oyster Linen   -> primary text on dark surfaces
-     --mauve    Heather Mauve  -> primary accent (candidate badges, pager,
-                                   scrollbar thumb, skip-link, spinner arc)
-     --slate    Slate Blue     -> hover backgrounds, secondary accent
-     --plum     Smoked Plum    -> panel surfaces (header, side-rail cards,
-                                   menu, waitscreen icon)
-     --charcoal Charcoal Smoke -> page background, darkest available text
+     --paper (Oyster Linen)  page ground, and the reversed-out text that
+                              sits on filled ink/accent shapes
+     --ink   (Smoked Plum)   body copy, structure, filled buttons, the
+                              selected-candidate state, the seal stamp
+     --slate (Slate Blue)    hairline borders, muted/secondary text,
+                              panel tint
+     --mauve (Heather Mauve) the one accent — focus rings, hover states,
+                              links, the composition caret rule
 
-   Everything else (translucent variants, the page-background gradient, the
-   hover tint on candidate rows) is derived from these five via color-mix()
-   rather than inventing new hex values, so the palette stays the single
-   source of truth. See REDESIGN_NOTES.md for the full rationale, including
-   the one accessibility trade-off worth knowing about.
+   No fifth color. No dark-mode glass panels. The previous skin was a
+   dark translucent-card UI; this one reads like a page from a Nôm
+   printed text — paper ground, ink-stamped controls, hairline rules
+   instead of shadows. See design notes at the end of this file.
    ========================================================================== */
 
 :root {
-  --oyster: #D5C7B7;
+  --paper: #D5C7B7;
   --mauve: #8E6B7A;
   --slate: #525F6C;
-  --plum: #4A313C;
-  --charcoal: #282A2C;
+  --ink: #4A313C;
 
-  --color-bg: var(--charcoal);
-  --color-bg-gradient: radial-gradient(140% 120% at 12% -10%,
-      color-mix(in srgb, var(--plum) 55%, var(--charcoal)) 0%,
-      var(--charcoal) 62%);
-  --color-surface: var(--plum);
-  --color-surface-translucent: color-mix(in srgb, var(--charcoal) 55%, transparent);
-  --color-text: var(--oyster);
-  --color-text-muted: color-mix(in srgb, var(--oyster) 62%, transparent);
+  --color-bg: var(--paper);
+  --color-surface: color-mix(in srgb, var(--paper) 90%, var(--slate) 10%);
+  --color-surface-strong: color-mix(in srgb, var(--paper) 80%, var(--slate) 20%);
+  --color-text: var(--ink);
+  --color-text-muted: var(--slate);
+  --color-on-ink: var(--paper);
   --color-accent: var(--mauve);
-  --color-accent-translucent: color-mix(in srgb, var(--mauve) 85%, transparent);
-  --color-accent-secondary: var(--slate);
-  --color-ink: var(--plum);
-  --color-border: color-mix(in srgb, var(--oyster) 14%, transparent);
-  --color-hover-tint: color-mix(in srgb, var(--color-surface) 72%, var(--color-accent));
+  --color-border: color-mix(in srgb, var(--ink) 22%, transparent);
+  --color-border-strong: color-mix(in srgb, var(--ink) 45%, transparent);
+  --color-hover-fill: color-mix(in srgb, var(--paper) 78%, var(--mauve) 22%);
+  --color-watermark: color-mix(in srgb, var(--ink) 5%, transparent);
 
-  --radius-sm: 8px;
-  --radius-md: 16px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
   --radius-full: 999px;
-  --shadow-panel: 0 24px 60px -28px color-mix(in srgb, var(--charcoal) 85%, black);
 
   --font-ui: Lexend, system-ui, -apple-system, sans-serif;
+  --font-display: 'Fraunces', Lexend, Georgia, serif;
   --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   --font-content: Lexend, SimSun, SimSun-ExtB, SimSun-ExtG, Jigmo3, HanaMinA, HanaMinB,
     "BabelStone Han", Sawndip, "Nom Na Tong", 'Han-Nom Gothic Supplement';
 
-  --header-h: 68px;
+  --header-h: 64px;
 }
 
 /* ---- Reset ---------------------------------------------------------- */
@@ -77,7 +66,26 @@ body {
   font-size: 16px;
   line-height: 1.5;
   color: var(--color-text);
-  background: var(--color-bg-gradient);
+  background: var(--color-bg);
+  position: relative;
+}
+
+/* The one deliberate flourish: a huge, near-invisible 文 watermark
+   anchored to the page corner. Everything else in this skin is quiet
+   hairlines and flat fills — this is the single place spending that
+   boldness, per the brief's own subject matter. */
+body::before {
+  content: "文";
+  position: fixed;
+  right: -4vw;
+  bottom: -12vh;
+  font-family: var(--font-content);
+  font-size: min(60vw, 640px);
+  line-height: 1;
+  color: var(--color-watermark);
+  pointer-events: none;
+  z-index: 0;
+  user-select: none;
 }
 
 a { color: inherit; text-decoration: none; cursor: pointer; }
@@ -104,7 +112,7 @@ img { vertical-align: middle; max-width: 100%; }
 a:focus-visible,
 button:focus-visible,
 [tabindex]:focus-visible {
-  outline: 2px solid var(--color-accent);
+  outline: 2px solid var(--ink);
   outline-offset: 2px;
   border-radius: var(--radius-sm);
 }
@@ -119,6 +127,11 @@ button:focus-visible,
 }
 
 /* ---- Fonts ------------------------------------------------------------ */
+/* Content font stack is untouched — load-bearing glyph coverage for
+   Hán Nôm rendering, not a style choice. Fraunces (UI display face,
+   loaded via <link> in index.html) is new: it carries the "printed
+   manuscript" character on the wordmark and the waitscreen line, while
+   Lexend keeps handling body/chrome for legibility. */
 
 @font-face {
   font-family: Lexend;
@@ -194,8 +207,8 @@ button:focus-visible,
   left: 12px;
   z-index: 1200;
   padding: 10px 16px;
-  background: var(--color-accent);
-  color: var(--color-bg);
+  background: var(--ink);
+  color: var(--color-on-ink);
   border-radius: var(--radius-sm);
   font-weight: 600;
   transition: top .15s ease;
@@ -203,9 +216,11 @@ button:focus-visible,
 
 .skip-link:focus {
   top: 12px;
+  outline: 2px solid var(--mauve);
+  outline-offset: 2px;
 }
 
-/* ---- Waitscreen (replaces loading.gif) --------------------------------- */
+/* ---- Waitscreen ---------------------------------------------------- */
 
 .waitscreen {
   position: fixed;
@@ -215,14 +230,14 @@ button:focus-visible,
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 18px;
-  background: var(--color-bg-gradient);
+  gap: 16px;
+  background: var(--color-bg);
 }
 
 .waitscreen__spinner {
   position: relative;
-  width: 56px;
-  height: 56px;
+  width: 52px;
+  height: 52px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -233,21 +248,21 @@ button:focus-visible,
   position: absolute;
   inset: -10px;
   border-radius: 50%;
-  border: 3px solid var(--color-border);
-  border-top-color: var(--color-accent);
+  border: 2px solid var(--color-border);
+  border-top-color: var(--mauve);
   animation: linguaevum-spin 0.9s linear infinite;
 }
 
 .waitscreen__mark {
-  width: 44px;
-  height: 44px;
-  border-radius: var(--radius-sm);
-  animation: linguaevum-pulse 1.8s ease-in-out infinite;
+  width: 40px;
+  height: 40px;
 }
 
 .waitscreen__text {
   margin: 0;
-  font-size: .95rem;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 1.05rem;
   color: var(--color-text-muted);
 }
 
@@ -255,25 +270,22 @@ button:focus-visible,
   to { transform: rotate(360deg); }
 }
 
-@keyframes linguaevum-pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: .78; transform: scale(.93); }
-}
-
-/* ---- Header -------------------------------------------------------- */
+/* ---- Header ---------------------------------------------------------
+   Flat paper ground, a single hairline rule underneath — a page break,
+   not a filled toolbar. */
 
 .site-header {
   position: sticky;
   top: 0;
   z-index: 100;
-  background: var(--color-surface);
-  border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg);
+  border-bottom: 1px solid var(--color-border-strong);
 }
 
 .site-header__inner {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 14px 24px;
+  padding: 12px 24px;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -287,30 +299,34 @@ button:focus-visible,
   gap: 10px;
 }
 
-.brand:hover, .brand:focus-visible {
-  color: var(--color-accent);
+.brand:hover .brand-name, .brand:focus-visible .brand-name {
+  color: var(--mauve);
 }
 
 .brand-mark {
-  border-radius: var(--radius-sm);
   flex: 0 0 auto;
 }
 
 .brand-name {
-  font-weight: 700;
-  font-size: 1.15rem;
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 600;
+  font-size: 1.3rem;
   letter-spacing: .01em;
   white-space: nowrap;
+  transition: color .12s ease;
 }
 
 .toolbar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
+  gap: 18px;
 }
 
-/* ---- Menu (mode picker) ------------------------------------------------ */
+/* ---- Menu (mode picker) ------------------------------------------------
+   Rectangular chip, hairline border, small radius — a stamped tab, not
+   a pill. Fills solid ink on open/hover rather than floating a shadow. */
 
 .menu {
   position: relative;
@@ -320,20 +336,25 @@ button:focus-visible,
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 14px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-full);
+  padding: 7px 12px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
   color: var(--color-text);
   font-family: var(--font-mono);
-  font-size: .85rem;
+  font-size: .82rem;
+  transition: background-color .12s ease, color .12s ease;
 }
 
-.menu-toggle:hover {
-  border-color: var(--color-accent);
+.menu-toggle:hover,
+.menu.is-open .menu-toggle {
+  background: var(--ink);
+  color: var(--color-on-ink);
+  border-color: var(--ink);
 }
 
 .menu-caret {
-  color: var(--color-text-muted);
+  color: currentColor;
+  opacity: .7;
   transition: transform .15s ease;
 }
 
@@ -343,17 +364,16 @@ button:focus-visible,
 
 .menu-panel {
   position: absolute;
-  top: calc(100% + 8px);
+  top: calc(100% + 6px);
   left: 0;
   z-index: 110;
   min-width: 230px;
   margin: 0;
-  padding: 6px;
+  padding: 4px;
   list-style: none;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-panel);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
   opacity: 0;
   visibility: hidden;
   transform: translateY(-4px);
@@ -369,44 +389,52 @@ button:focus-visible,
 .menu-item {
   display: block;
   width: 100%;
-  padding: 9px 12px;
+  padding: 8px 10px;
   border-radius: var(--radius-sm);
-  color: var(--color-text-muted);
-  font-size: .9rem;
+  color: var(--color-text);
+  font-size: .88rem;
   text-align: left;
 }
 
 .menu-item:hover {
-  background: var(--color-accent-secondary);
-  color: var(--color-text);
+  background: var(--color-hover-fill);
+  color: var(--ink);
 }
 
-/* ---- Convert direction buttons ------------------------------------- */
+/* ---- Convert direction ------------------------------------------------
+   Text buttons with an underline accent, split by a hairline divider —
+   two facing pages of a book, not a button pair. */
 
 .convert-group {
   display: flex;
-  gap: 8px;
+  align-items: center;
+  gap: 0;
 }
 
 .convert-btn {
-  padding: 8px 14px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-full);
+  position: relative;
+  padding: 6px 14px;
   color: var(--color-text-muted);
-  font-size: .85rem;
+  font-size: .86rem;
   white-space: nowrap;
-  transition: background-color .15s ease, color .15s ease, border-color .15s ease;
+  border-bottom: 2px solid transparent;
+  transition: color .15s ease, border-color .15s ease;
+}
+
+.convert-group .convert-btn + .convert-btn {
+  border-left: 1px solid var(--color-border);
 }
 
 .convert-btn:hover {
-  color: var(--color-text);
-  background: var(--color-accent-secondary);
-  border-color: var(--color-accent-secondary);
+  color: var(--ink);
+  border-bottom-color: var(--mauve);
 }
 
 /* ---- Workbench (main grid) ------------------------------------------ */
 
 .workbench {
+  position: relative;
+  z-index: 1;
   max-width: 1400px;
   margin: 0 auto;
   padding: 24px;
@@ -423,15 +451,7 @@ button:focus-visible,
   display: flex;
   align-items: stretch;
   gap: 16px;
-  /* Explicit height lives here (not on .pad) so both #txtPad and
-     .output-panel resolve against the same definite container height.
-     Previously this was set directly on .pad, but #txtPadout's ID rule
-     (height: 100%) needs a definite containing-block height to resolve
-     against — .output-panel had none, so it sized to its converted-text
-     content instead, and #txtPad (which had its own explicit height)
-     didn't stretch to match. See REDESIGN_NOTES.md-adjacent chat log for
-     the walkthrough if this needs revisiting. */
-  height: calc(100dvh - var(--header-h) - 88px);
+  height: calc(100dvh - var(--header-h) - 80px);
 }
 
 .pad {
@@ -442,7 +462,7 @@ button:focus-visible,
   padding: 20px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  background: var(--color-surface-translucent);
+  background: var(--color-surface);
   color: var(--color-text);
   font-family: var(--font-content);
   font-size: clamp(16px, 1.3vw, 20px);
@@ -453,14 +473,13 @@ button:focus-visible,
 
 #txtPad { outline: none; }
 
+#txtPad::placeholder { color: var(--color-text-muted); }
+
 #txtPad:focus-visible {
-  box-shadow: inset 0 0 0 2px var(--color-accent);
+  border-color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--ink);
 }
 
-/* Output panel: appears beside #txtPad (not below it) once a conversion
-   has run. It's a positioned wrapper around #txtPadout so the copy
-   button — which copies THIS panel's text — can be anchored to it
-   directly, instead of floating at the midpoint between the two panes. */
 .output-panel {
   position: relative;
   display: none;
@@ -471,27 +490,25 @@ button:focus-visible,
 #txtPadout {
   height: 100%;
   overflow: auto;
+  background: var(--color-surface-strong);
 }
 
 .copy-btn {
   position: absolute;
-  top: 14px;
-  right: 14px;
+  top: 12px;
+  right: 12px;
   z-index: 5;
   display: none;
-  padding: 8px 18px;
-  border-radius: var(--radius-full);
-  background: var(--color-accent-translucent);
-  color: var(--color-bg);
+  padding: 7px 16px;
+  border-radius: var(--radius-sm);
+  background: var(--ink);
+  color: var(--color-on-ink);
   font-weight: 600;
-  font-size: .82rem;
-  /* Sits on top of the output text's corner rather than reserving space
-     for itself via padding on #txtPadout — that padding used to push the
-     output text down below where #txtPad's text starts, misaligning the
-     two panes. A backdrop blur keeps the button legible over text. */
-  backdrop-filter: blur(4px);
-  box-shadow: 0 4px 14px -6px color-mix(in srgb, var(--charcoal) 70%, transparent);
+  font-size: .8rem;
+  transition: background-color .12s ease;
 }
+
+.copy-btn:hover { background: var(--mauve); }
 
 .copy-btn__label--copied { display: none; }
 .copy-btn.is-copied .copy-btn__label:not(.copy-btn__label--copied) { display: none; }
@@ -500,21 +517,22 @@ button:focus-visible,
 /* ---- Side rail ------------------------------------------------------- */
 
 .side-rail {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
   min-width: 0;
 }
 
 .composition {
   flex: 0 0 auto;
   min-height: 40px;
-  padding: 9px 14px;
-  border-radius: var(--radius-sm);
-  background: var(--color-surface);
+  padding: 8px 4px;
+  border-bottom: 2px solid var(--mauve);
   color: var(--color-text);
   font-family: var(--font-content);
-  font-size: 1.1rem;
+  font-size: 1.15rem;
   letter-spacing: .01em;
 }
 
@@ -522,11 +540,11 @@ button:focus-visible,
   flex: 0 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
   counter-reset: candidate;
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   overflow: hidden;
-  box-shadow: var(--shadow-panel);
 }
 
 .outopt {
@@ -545,39 +563,48 @@ button:focus-visible,
   transition: background-color .12s ease, color .12s ease;
 }
 
+.candidate-list .outopt:not(:last-child) {
+  border-bottom: 1px solid var(--color-border);
+}
+
+/* Candidate index badge: a small rotated ink "chop" square, rather than
+   a centered circle — the seal-stamp motif carried down from the brand
+   mark, reversed onto every candidate row. */
 .outopt::before {
   content: counter(candidate);
   flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 22px;
-  height: 22px;
-  border-radius: var(--radius-full);
-  background: var(--color-accent);
-  color: var(--color-bg);
+  width: 20px;
+  height: 20px;
+  border-radius: 3px;
+  background: var(--ink);
+  color: var(--color-on-ink);
   font-family: var(--font-mono);
-  font-size: .7rem;
+  font-size: .68rem;
   font-weight: 600;
+  transform: rotate(-6deg);
 }
 
 .outopt:empty {
-  opacity: .32;
+  opacity: .35;
   pointer-events: none;
 }
 
 .outopt:not(:empty):hover {
-  background: var(--color-hover-tint);
+  background: var(--color-hover-fill);
 }
 
 .outopt.is-selected {
-  background: var(--color-text);
-  color: var(--color-ink);
+  background: var(--ink);
+  color: var(--color-on-ink);
 }
 
 .outopt.is-selected::before {
-  background: var(--color-ink);
-  color: var(--color-text);
+  background: var(--mauve);
+  color: var(--color-on-ink);
+  transform: rotate(0deg);
 }
 
 .pager {
@@ -588,24 +615,26 @@ button:focus-visible,
 
 .pager-btn {
   flex: 1;
-  padding: 8px;
+  padding: 7px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   color: var(--color-text);
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   line-height: 1;
-  transition: background-color .12s ease, border-color .12s ease;
+  transition: background-color .12s ease, border-color .12s ease, color .12s ease;
 }
 
 .pager-btn:hover {
-  background: var(--color-accent-secondary);
-  border-color: var(--color-accent-secondary);
+  background: var(--ink);
+  color: var(--color-on-ink);
+  border-color: var(--ink);
 }
 
 .examples {
   flex: 1 1 auto;
-  min-height: 140px;
-  padding: 10px 14px;
+  min-height: 120px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-surface);
   color: var(--color-text);
@@ -618,21 +647,24 @@ button:focus-visible,
 .scrollable-menu::-webkit-scrollbar { width: 4px; }
 .scrollable-menu::-webkit-scrollbar-thumb {
   border-radius: 3px;
-  background-color: var(--color-accent);
+  background-color: var(--slate);
 }
 
 /* ---- Footer ------------------------------------------------------------ */
 
 .site-footer {
+  position: relative;
+  z-index: 1;
   max-width: 1400px;
   margin: 0 auto;
-  padding: 28px 24px 36px;
+  padding: 24px 24px 32px;
   text-align: center;
   color: var(--color-text-muted);
+  border-top: 1px solid var(--color-border);
 }
 
 .site-footer__credits {
-  margin: 0 0 6px;
+  margin: 12px 0 6px;
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
@@ -640,7 +672,7 @@ button:focus-visible,
   font-size: .8rem;
 }
 
-.site-footer__credits .dot { opacity: .5; }
+.site-footer__credits .dot { opacity: .6; }
 
 .site-footer__meta {
   margin: 0;
@@ -650,9 +682,6 @@ button:focus-visible,
 /* ---- Responsive ------------------------------------------------------ */
 
 @media (max-width: 767px) {
-  /* .pad's height is set directly below (not via the --header-h calc()
-     used on desktop), since the header is allowed to wrap to two rows
-     here and its exact height is no longer predictable. */
   .site-header__inner { padding: 10px 16px; }
 
   .workbench {
@@ -676,12 +705,36 @@ button:focus-visible,
   }
 
   .convert-btn, .menu-toggle {
-    padding: 7px 11px;
-    font-size: .78rem;
+    padding: 6px 10px;
+    font-size: .76rem;
   }
+
+  body::before { font-size: 80vw; bottom: -8vh; }
 }
 
 @media (max-width: 420px) {
-  .brand-name { font-size: 1rem; }
-  .convert-btn { padding: 6px 9px; font-size: .72rem; }
+  .brand-name { font-size: 1.1rem; }
+  .convert-btn { padding: 5px 8px; font-size: .7rem; }
 }
+
+/* ==========================================================================
+   Design notes (for handoff — not shipped, safe to strip)
+   --------------------------------------------------------------------------
+   Plan reviewed against the brief before building:
+     Color  — paper/ink/slate/mauve, one role each, no fifth color, no
+              gradients. (Previous skin used a dark charcoal ground not in
+              the given 4; dropped entirely rather than kept as a hidden
+              5th token.)
+     Type   — Fraunces (display, wordmark + waitscreen line only) paired
+              with Lexend (UI/body, unchanged). Content font stack
+              (Sino-Nom glyphs) untouched — explicitly load-bearing.
+     Layout — same grid/flow as before (nothing in ime.js/dropdown.js's
+              DOM contract changed), but chrome swapped from filled
+              dark cards + pill buttons + shadows to paper ground +
+              hairline rules + small-radius "stamped" chips, with a
+              single oversized 文 watermark as the one bold gesture.
+     Motif  — the seal-stamp: brand mark, candidate-index badges, and
+              the selected-candidate inversion all share the same
+              ink-square/rotated-chop language, so the accent feels
+              specific to a Hán Nôm tool rather than a generic UI kit.
+   ========================================================================== */
