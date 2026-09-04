@@ -36,11 +36,12 @@
   --color-hover-fill: color-mix(in srgb, var(--paper) 78%, var(--mauve) 22%);
   --color-watermark: color-mix(in srgb, var(--ink) 5%, transparent);
 
-  --radius-sm: 4px;
-  --radius-md: 8px;
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 22px;
   --radius-full: 999px;
 
-  --font-ui: Lexend, system-ui, -apple-system, sans-serif;
+  --font-ui: 'Plus Jakarta Sans', Lexend, system-ui, -apple-system, sans-serif;
   --font-display: 'Fraunces', Lexend, Georgia, serif;
   --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   --font-content: Lexend, SimSun, SimSun-ExtB, SimSun-ExtG, Jigmo3, HanaMinA, HanaMinB,
@@ -128,10 +129,14 @@ button:focus-visible,
 
 /* ---- Fonts ------------------------------------------------------------ */
 /* Content font stack is untouched — load-bearing glyph coverage for
-   Hán Nôm rendering, not a style choice. Fraunces (UI display face,
-   loaded via <link> in index.html) is new: it carries the "printed
-   manuscript" character on the wordmark and the waitscreen line, while
-   Lexend keeps handling body/chrome for legibility. */
+   Hán Nôm rendering, not a style choice; Lexend stays first in that
+   stack as the Latin fallback next to the CJK/Nôm faces.
+   Fraunces (loaded via <link> in index.html) carries the "printed
+   manuscript" character on the wordmark and the waitscreen line.
+   Plus Jakarta Sans (also loaded via <link>) now handles UI chrome —
+   candidate list, buttons, labels — swapped in for a less dated, more
+   current-feeling sans than the self-hosted Lexend gave the interface;
+   Lexend remains the fallback if the web font fails to load. */
 
 @font-face {
   font-family: Lexend;
@@ -373,7 +378,7 @@ button:focus-visible,
   list-style: none;
   background: var(--color-bg);
   border: 1px solid var(--color-border-strong);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   opacity: 0;
   visibility: hidden;
   transform: translateY(-4px);
@@ -461,7 +466,7 @@ button:focus-visible,
   flex: 1 1 0;
   padding: 20px;
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   background: var(--color-surface);
   color: var(--color-text);
   font-family: var(--font-content);
@@ -499,8 +504,8 @@ button:focus-visible,
   right: 12px;
   z-index: 5;
   display: none;
-  padding: 7px 16px;
-  border-radius: var(--radius-sm);
+  padding: 7px 18px;
+  border-radius: var(--radius-full);
   background: var(--ink);
   color: var(--color-on-ink);
   font-weight: 600;
@@ -543,7 +548,7 @@ button:focus-visible,
   gap: 1px;
   counter-reset: candidate;
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   overflow: hidden;
 }
 
@@ -578,7 +583,7 @@ button:focus-visible,
   justify-content: center;
   width: 20px;
   height: 20px;
-  border-radius: 3px;
+  border-radius: 6px;
   background: var(--ink);
   color: var(--color-on-ink);
   font-family: var(--font-mono);
@@ -635,7 +640,7 @@ button:focus-visible,
   min-height: 120px;
   padding: 10px 12px;
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   background: var(--color-surface);
   color: var(--color-text);
   overflow: auto;
