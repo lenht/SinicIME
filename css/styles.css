@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Linguaevum — Sinogram IME
+   Chữ Nôm không đa âm — Sinogram IME
    Skin: "ink on paper" — a chop-stamp / manuscript reading built from
    exactly four colors, each doing one job:
 
@@ -263,6 +263,30 @@ button:focus-visible,
   height: 40px;
 }
 
+.waitscreen__wordmark {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  line-height: 1.1;
+}
+
+.waitscreen__nom {
+  font-family: var(--font-content);
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.waitscreen__quoc {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 600;
+  font-size: .95rem;
+  color: var(--color-text-muted);
+}
+
 .waitscreen__text {
   margin: 0;
   font-family: var(--font-display);
@@ -304,7 +328,11 @@ button:focus-visible,
   gap: 10px;
 }
 
-.brand:hover .brand-name, .brand:focus-visible .brand-name {
+.brand:hover .brand-name-quoc, .brand:focus-visible .brand-name-quoc {
+  color: var(--mauve);
+}
+
+.brand:hover .brand-name-nom, .brand:focus-visible .brand-name-nom {
   color: var(--mauve);
 }
 
@@ -312,13 +340,33 @@ button:focus-visible,
   flex: 0 0 auto;
 }
 
-.brand-name {
+/* Stacked double-script wordmark: the Nôm glyphs read as the primary
+   mark (same weight/role the single-line "Linguaevum" wordmark used to
+   carry), with the Quốc Ngữ form underneath as a caption/gloss — the
+   same relationship a chop stamp has to the reading printed beside it. */
+.brand-wordmark {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.05;
+  white-space: nowrap;
+}
+
+.brand-name-nom {
+  font-family: var(--font-content);
+  font-size: 1.3rem;
+  font-weight: 600;
+  letter-spacing: .01em;
+  color: var(--color-text);
+  transition: color .12s ease;
+}
+
+.brand-name-quoc {
   font-family: var(--font-display);
   font-style: italic;
   font-weight: 600;
-  font-size: 1.3rem;
+  font-size: .72rem;
   letter-spacing: .01em;
-  white-space: nowrap;
+  color: var(--color-text-muted);
   transition: color .12s ease;
 }
 
@@ -718,7 +766,8 @@ button:focus-visible,
 }
 
 @media (max-width: 420px) {
-  .brand-name { font-size: 1.1rem; }
+  .brand-name-nom { font-size: 1.1rem; }
+  .brand-name-quoc { font-size: .64rem; }
   .convert-btn { padding: 5px 8px; font-size: .7rem; }
 }
 
