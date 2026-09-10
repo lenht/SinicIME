@@ -272,11 +272,11 @@ button:focus-visible,
   line-height: 1.1;
 }
 
+/* Same pre-rendered image as .brand-name-nom — see that rule's comment. */
 .waitscreen__nom {
-  font-family: var(--font-content);
-  font-size: 1.6rem;
-  font-weight: 600;
-  color: var(--color-text);
+  display: block;
+  align-self: center;
+  height: 1.6rem;
 }
 
 .waitscreen__quoc {
@@ -332,10 +332,6 @@ button:focus-visible,
   color: var(--mauve);
 }
 
-.brand:hover .brand-name-nom, .brand:focus-visible .brand-name-nom {
-  color: var(--mauve);
-}
-
 .brand-mark {
   flex: 0 0 auto;
 }
@@ -351,13 +347,21 @@ button:focus-visible,
   white-space: nowrap;
 }
 
+/* .brand-name-nom is now a pre-rendered image (baked at --color-text
+   ink, transparent background) instead of live text in --font-content.
+   Reason: the leading glyph is U+2BCD8 (Extension-E), which has the
+   same "no OS font has this, and the self-hosted CJK/Nôm stack takes a
+   beat to load" problem the favicon.svg swap already solved for the
+   tab icon — this fixes the equivalent flash-of-missing-glyph on the
+   in-page wordmark. Baked-in color means it no longer participates in
+   the brand hover tint; only .brand-name-quoc shifts to --mauve now.
+   height is in rem so it scales with the root font size the same way
+   the old font-size did; width is intentionally omitted so the browser
+   derives it from the image's natural aspect ratio. */
 .brand-name-nom {
-  font-family: var(--font-content);
-  font-size: 1.3rem;
-  font-weight: 600;
-  letter-spacing: .01em;
-  color: var(--color-text);
-  transition: color .12s ease;
+  display: block;
+  align-self: flex-start;
+  height: 1.3rem;
 }
 
 .brand-name-quoc {
@@ -691,7 +695,6 @@ button:focus-visible,
   border-radius: var(--radius-lg);
   background: var(--color-surface);
   color: var(--color-text);
-  font-family: var(--font-content);
   overflow: auto;
 }
 
@@ -767,7 +770,7 @@ button:focus-visible,
 }
 
 @media (max-width: 420px) {
-  .brand-name-nom { font-size: 1.1rem; }
+  .brand-name-nom { height: 1.1rem; }
   .brand-name-quoc { font-size: .64rem; }
   .convert-btn { padding: 5px 8px; font-size: .7rem; }
 }
