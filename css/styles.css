@@ -691,6 +691,7 @@ button:focus-visible,
   border-radius: var(--radius-lg);
   background: var(--color-surface);
   color: var(--color-text);
+  font-family: var(--font-content);
   overflow: auto;
 }
 
