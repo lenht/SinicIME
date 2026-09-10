@@ -272,11 +272,22 @@ button:focus-visible,
   line-height: 1.1;
 }
 
-/* Same pre-rendered image as .brand-name-nom — see that rule's comment. */
+/* Same masked image as .brand-name-nom — see that rule's comment.
+   No hover state here since the waitscreen isn't interactive. */
 .waitscreen__nom {
   display: block;
   align-self: center;
   height: 1.6rem;
+  aspect-ratio: 215 / 46;
+  background-color: var(--color-text);
+  -webkit-mask-image: url('../brand-name-nom.png');
+  mask-image: url('../brand-name-nom.png');
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
 }
 
 .waitscreen__quoc {
@@ -332,6 +343,10 @@ button:focus-visible,
   color: var(--mauve);
 }
 
+.brand:hover .brand-name-nom, .brand:focus-visible .brand-name-nom {
+  background-color: var(--mauve);
+}
+
 .brand-mark {
   flex: 0 0 auto;
 }
@@ -347,21 +362,32 @@ button:focus-visible,
   white-space: nowrap;
 }
 
-/* .brand-name-nom is now a pre-rendered image (baked at --color-text
-   ink, transparent background) instead of live text in --font-content.
-   Reason: the leading glyph is U+2BCD8 (Extension-E), which has the
-   same "no OS font has this, and the self-hosted CJK/Nôm stack takes a
-   beat to load" problem the favicon.svg swap already solved for the
-   tab icon — this fixes the equivalent flash-of-missing-glyph on the
-   in-page wordmark. Baked-in color means it no longer participates in
-   the brand hover tint; only .brand-name-quoc shifts to --mauve now.
-   height is in rem so it scales with the root font size the same way
-   the old font-size did; width is intentionally omitted so the browser
-   derives it from the image's natural aspect ratio. */
+/* .brand-name-nom is now a CSS mask over brand-name-nom.png rather than
+   live text in --font-content. Reason: the leading glyph is U+2BCD8
+   (Extension-E), which has the same "no OS font has this, and the
+   self-hosted CJK/Nôm stack takes a beat to load" problem favicon.svg
+   already solved for the tab icon — this fixes the equivalent flash-of-
+   missing-glyph on the in-page wordmark. Using it as a mask (rather
+   than an <img>) means only the PNG's alpha channel (the glyph shapes)
+   is used — the actual color comes from background-color below, so it
+   can still hover-tint to --mauve exactly like .brand-name-quoc does.
+   aspect-ratio matches the source crop (215x46) so height alone (in
+   rem, same role the old font-size played) is enough to size it. */
 .brand-name-nom {
   display: block;
   align-self: flex-start;
   height: 1.3rem;
+  aspect-ratio: 215 / 46;
+  background-color: var(--color-text);
+  -webkit-mask-image: url('../brand-name-nom.png');
+  mask-image: url('../brand-name-nom.png');
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: left center;
+  mask-position: left center;
+  transition: background-color .12s ease;
 }
 
 .brand-name-quoc {
