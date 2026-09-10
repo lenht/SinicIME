@@ -202,13 +202,58 @@ function txtPadKeyTyped(evt) {
     var txtPadEl = $id("txtPad");
     var rubytypeEl = $id("rubytype");
     var rubystr = rubytypeEl.textContent;
+    var ind = selectedindex - 1;
     if (evtK == 13) {   //ENTER
-        rubytypeEl.innerHTML = "";
-        listUpdate();
-        lentype = 0;
+        // Commit the highlighted candidate, then move to a new line, as one
+        // combined action. If there's no active composition (optionlist
+        // empty), fall through to the browser's own default newline
+        // insertion instead.
+        if (optionlist.length != 0) {
+            // Same bucket dispatch as the SPACE handler below — this is
+            // what decides conState.lenBuf, i.e. how many already-
+            // committed characters from an earlier syllable putWord()
+            // must also remove when the selected candidate is a compound
+            // spanning more than just the current syllable. (A shorter
+            // 2-condition version was tried here and was wrong: it read
+            // "ind >= conState.trSz" on its own, which is vacuously true
+            // for every ind when trSz is still its default 0 — the
+            // common case for a compound matched via the exact queue
+            // rather than a tail continuation — so it was zeroing lenBuf
+            // right before putWord() instead of leaving it at the value
+            // addSelCompound already set.) The queue/tail assignments
+            // below are harmless leftovers from copying SPACE's chain
+            // verbatim; they're overwritten unconditionally right after,
+            // since Enter always ends composition.
+            if (ind < conState.cSz) {
+                conState.queue = (conState.cSz == conState.qSz) ? "" : (conState.queue + rubystr + " ");
+                conState.tail = "";
+            } else if (ind < conState.qSz) {
+                conState.queue = conState.queue + rubystr + " ";
+                conState.tail = rubystr + " ";
+            } else if (ind < conState.rSz) {
+                conState.queue = conState.tail = "";
+            } else if (ind < conState.tqSz) {
+                conState.lenBuf = conState.lenTail;
+                conState.queue = conState.tail + rubystr + " ";
+                conState.tail = rubystr + " ";
+            } else if (ind < conState.trSz) {
+                conState.lenBuf = conState.lenTail;
+                conState.queue = conState.tail = "";
+            } else {
+                conState.queue = rubystr + " ";
+                conState.tail = "";
+                conState.lenBuf = 0;
+            }
+            evt.preventDefault();
+            putWord($id("w" + selectedindex).textContent + "\n");
+        } else {
+            rubytypeEl.innerHTML = "";
+            listUpdate();
+            lentype = 0;
+        }
+        conState.queue = conState.tail = "";
         return;
     }
-    var ind = selectedindex - 1;
     var tonechar = toneNumb(evtC);
     if ((optionlist.length != 0) && !isNaN(parseInt(tonechar)) && (evtC != tonechar)) {   //SHIFT + Num
         var selnum = parseInt(tonechar);
@@ -367,17 +412,60 @@ function txtPadKeyInput(evt) {
     // CHARACTER INPUT
     if (newtxtPadlength > curtxtPadlength) {
         var evtC = txtPadEl.value.substring(curcaret - 1, curcaret);
+        var ind = selectedindex - 1;
 
-        // ENTER
+        // ENTER — mirrors the SPACE branch immediately below: the browser
+        // already inserted "\n" by the time this keyup fires, so pull it
+        // back out, then either let putWord() place [selected candidate +
+        // "\n"] together, or, if there's no active composition to select,
+        // put the newline straight back so the cursor still moves to a
+        // new line.
         if (evtK == 13) {
-            rubytypeEl.innerHTML = "";
-            listUpdate();
-            lentype = 0;
+            txtPadEl.value = txtPadEl.value.substring(0, curcaret - 1) + txtPadEl.value.substring(curcaret, txtPadEl.value.length);
+            txtPadEl.selectionStart = txtPadEl.selectionEnd = curcaret - 1;
+
+            if (optionlist.length != 0) {
+                // Same bucket dispatch as the SPACE branch immediately
+                // below — see the longer note on this in txtPadKeyTyped's
+                // ENTER handling. A 2-condition shortcut checked here
+                // first was wrong: "ind >= conState.trSz" alone is
+                // vacuously true whenever trSz is still its default 0
+                // (no tail-continuation match), which incorrectly zeroed
+                // lenBuf even when a compound was matched via the exact
+                // queue — the case that most needs lenBuf preserved.
+                if (ind < conState.cSz) {
+                    conState.queue = (conState.cSz == conState.qSz) ? "" : (conState.queue + rubystr + " ");
+                    conState.tail = "";
+                } else if (ind < conState.qSz) {
+                    conState.queue = conState.queue + rubystr + " ";
+                    conState.tail = rubystr + " ";
+                } else if (ind < conState.rSz) {
+                    conState.queue = conState.tail = "";
+                } else if (ind < conState.tqSz) {
+                    conState.lenBuf = conState.lenTail;
+                    conState.queue = conState.tail + rubystr + " ";
+                    conState.tail = rubystr + " ";
+                } else if (ind < conState.trSz) {
+                    conState.lenBuf = conState.lenTail;
+                    conState.queue = conState.tail = "";
+                } else {
+                    conState.queue = rubystr + " ";
+                    conState.tail = "";
+                    conState.lenBuf = 0;
+                }
+                putWord($id("w" + selectedindex).textContent + "\n");
+            } else {
+                var caret = txtPadEl.selectionEnd;
+                txtPadEl.value = txtPadEl.value.substring(0, caret) + "\n" + txtPadEl.value.substring(caret, txtPadEl.value.length);
+                txtPadEl.selectionStart = txtPadEl.selectionEnd = caret + 1;
+                rubytypeEl.innerHTML = "";
+                listUpdate();
+                lentype = 0;
+            }
+            conState.queue = conState.tail = "";
             curtxtPadlength = txtPadEl.value.length;
             return;
         }
-
-        var ind = selectedindex - 1;
 
         // SPACE
         if (evtC == ' ') {
