@@ -94,10 +94,32 @@ def main():
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
     compact = "--compact" in sys.argv
 
-    if len(args) != 2:
+    if len(args) == 0:
+        # No arguments (e.g. VS Code's Run button): look for the database
+        # next to this script, then in the current directory, and write
+        # imenom.json beside it. The database may still be named
+        # imenom.jpg (it is a SQLite file under a .jpg extension).
+        here = os.path.dirname(os.path.abspath(__file__))
+        src = None
+        for folder in (here, os.getcwd()):
+            for name in ("imenom.db", "imenom.jpg"):
+                candidate = os.path.join(folder, name)
+                if os.path.isfile(candidate):
+                    src = candidate
+                    break
+            if src:
+                break
+        if not src:
+            print("Could not find imenom.db or imenom.jpg next to this script.")
+            print("Usage: python3 export_imenom_json.py <imenom.db> <output.json> [--compact]")
+            sys.exit(1)
+        out = os.path.join(os.path.dirname(src), "imenom.json")
+        print(f"No arguments given, using: {src} -> {out}")
+    elif len(args) == 2:
+        src, out = args
+    else:
         print("Usage: python3 export_imenom_json.py <imenom.db> <output.json> [--compact]")
         sys.exit(1)
-    src, out = args
 
     rubynom, cmpnom = fetch_rows(src)
 
