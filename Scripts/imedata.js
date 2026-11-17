@@ -2,10 +2,13 @@
 //
 // Loads imenom.json (flat arrays exported by export_imenom_json.py) and
 // builds:
-//   - rubyToWordLevel : Map<raw ruby string, [[word, level], ...]>
-//       (rubynom grouped by exact ruby value, insertion order; consumers
+//   - rubyToWordLevel : Map<lowercased ruby string, [[word, level], ...]>
+//       (rubynom grouped by lowercased ruby, insertion order; consumers
 //       sort/filter as needed — addSelRuby and selChar's dict lookup share
-//       this but apply different filters, see notes below)
+//       this but apply different filters, see notes below). Keyed on the
+//       LOWERCASED ruby because every caller (addSelRuby, selChar) looks
+//       it up with an already-lowercased key; keying on the raw value made
+//       capitalized rows (e.g. "Việt" -> 越, 粵) unreachable.
 //   - cwordExact/cwordPrefix   : cword direction (Sino/Nom -> ruby)
 //   - crubyExact/crubyPrefix   : crubynom direction (ruby -> Sino/Nom)
 //       Each direction is a case-sensitive exact-match Map (mirrors SQL
@@ -126,14 +129,24 @@
         var rubynom = normalized.rubynom; // [word, ruby, level][]
         var cmpnom = normalized.cmpnom;   // [cword, crubynom][]
 
+        // Keyed on the lowercased ruby: both consumers (addSelRuby via
+        // rubyExactLookupJS, selChar via dictLookupRubyJS) always query
+        // with a lowercased key, so a raw-keyed map left capitalized rows
+        // (e.g. "Việt") unreachable. toLowerCase() — not asciiFold —
+        // because capitals like Â/Ấ/Ư are non-ASCII. Rows that differ only
+        // by case merge into one bucket, in file order.
         var rubyToWordLevel = new Map();
         for (var i = 0; i < rubynom.length; i++) {
             var word = rubynom[i][0], ruby = rubynom[i][1], level = rubynom[i][2];
-            var arr = rubyToWordLevel.get(ruby);
-            if (!arr) { arr = []; rubyToWordLevel.set(ruby, arr); }
+            var rkey = ruby.toLowerCase();
+            var arr = rubyToWordLevel.get(rkey);
+            if (!arr) { arr = []; rubyToWordLevel.set(rkey, arr); }
             arr.push([word, level]);
         }
 
+        // wordToRubyLevel intentionally keeps the raw ruby (original
+        // capitalization) — Nôm -> Quốc Ngữ output should still print
+        // "Việt", not "việt".
         var wordToRubyLevel = new Map();
         for (var i = 0; i < rubynom.length; i++) {
             var word = rubynom[i][0], ruby = rubynom[i][1], level = rubynom[i][2];
@@ -249,8 +262,11 @@
         // rubynom where ruby=fullchar order by (level%maxlevel) desc
         // NOTE: no level>1 filter here — matches the original, which is
         // deliberately more permissive than addSelRuby's candidate list.
+        // The ruby key is lowercased to match rubyToWordLevel's keying
+        // (selChar already passes a lowercased key; this makes the
+        // function safe for any caller).
         return function dictLookupRubyJS(ruby, maxlevel) {
-            var pairs = index.rubyToWordLevel.get(ruby);
+            var pairs = index.rubyToWordLevel.get(ruby.toLowerCase());
             if (!pairs) return [];
             return sortByLevelMod(pairs, maxlevel);
         };
@@ -261,7 +277,7 @@
         // Replaces: SELECT word FROM rubynom WHERE ruby=x AND level>1
         //           ORDER BY level DESC
         return function rubyExactLookupJS(ruby) {
-            var pairs = index.rubyToWordLevel.get(ruby);
+            var pairs = index.rubyToWordLevel.get(ruby.toLowerCase());
             if (!pairs) return [];
             var filtered = pairs.filter(function (p) { return p[1] > 1; });
             filtered.sort(function (a, b) { return b[1] - a[1]; });
